@@ -6,30 +6,37 @@ package main
 
 import (
 	"flag"
+	"io"
 	"log"
 	"net/http"
 )
 
 var addr = flag.String("addr", ":8080", "http service address")
 
-func serveHome(w http.ResponseWriter, r *http.Request) {
+func serveChat(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.URL)
-	if r.URL.Path != "/" {
-		http.Error(w, "Not found", 404)
-		return
-	}
 	if r.Method != "GET" {
 		http.Error(w, "Method not allowed", 405)
 		return
 	}
-	http.ServeFile(w, r, "home.html")
+	http.ServeFile(w, r, "chat.html")
+}
+
+func serveRoot(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/health", http.StatusFound)
+}
+
+func serveHealth(w http.ResponseWriter, r *http.Request) {
+	io.WriteString(w, "ok")
 }
 
 func main() {
 	flag.Parse()
 	hub := newHub()
 	go hub.run()
-	http.HandleFunc("/", serveHome)
+	http.HandleFunc("/", serveRoot)
+	http.HandleFunc("/chat", serveChat)
+	http.HandleFunc("/health", serveHealth)
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		serveWs(hub, w, r)
 	})
