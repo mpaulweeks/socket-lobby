@@ -5,6 +5,8 @@
 <script type="text/javascript">
 window.onload = function () {
     var conn;
+    var user = '' + (new Date()).getTime();
+    var lobby = document.getElementById("lobby");
     var msg = document.getElementById("msg");
     var log = document.getElementById("log");
 
@@ -20,10 +22,19 @@ window.onload = function () {
         if (!conn) {
             return false;
         }
+        if (!lobby.value) {
+            return false;
+        }
         if (!msg.value) {
             return false;
         }
-        conn.send(msg.value);
+        const json = JSON.stringify({
+          user: user,
+          app: 'chat',
+          lobby: lobby.value,
+          message: msg.value,
+        });
+        conn.send(json);
         msg.value = "";
         return false;
     };
@@ -36,10 +47,12 @@ window.onload = function () {
             appendLog(item);
         };
         conn.onmessage = function (evt) {
+            console.log(evt.data);
             var messages = evt.data.split('\n');
             for (var i = 0; i < messages.length; i++) {
                 var item = document.createElement("div");
-                item.innerText = messages[i];
+                const data = JSON.parse(messages[i]);
+                item.innerText = data.user + ' - ' + data.message;
                 appendLog(item);
             }
         };
@@ -92,6 +105,7 @@ body {
 <div id="log"></div>
 <form id="form">
     <input type="submit" value="Send" />
+    <input type="text" id="lobby" size="12"/>
     <input type="text" id="msg" size="64"/>
 </form>
 </body>
