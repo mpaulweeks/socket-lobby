@@ -4,45 +4,6 @@
 
 package main
 
-import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"log"
-)
-
-type Message struct {
-	App     string `json:"app"`
-	User    string `json:"user"`
-	Lobby   string `json:"lobby"`
-	Message string `json:"message"`
-}
-
-func (m *Message) ToWrite() []byte {
-	b, err := json.Marshal(m)
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
-	fmt.Println(string(b))
-	return b
-}
-
-func newMessage(rawMessage []byte) *Message {
-	newline = []byte{'\n'}
-	space = []byte{' '}
-
-	trimmed := bytes.TrimSpace(bytes.Replace(rawMessage, newline, space, -1))
-	message := Message{}
-	err := json.Unmarshal(trimmed, &message)
-	if err != nil {
-		log.Printf("error: %v", err)
-		return nil
-	}
-	fmt.Printf("\n\n json object:::: %+v", message)
-	return &message
-}
-
 // hub maintains the set of active clients and broadcasts messages to the
 // clients.
 type Hub struct {
@@ -73,6 +34,7 @@ func (h *Hub) run() {
 		select {
 		case client := <-h.register:
 			h.clients[client] = true
+			client.writeRegister()
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
@@ -81,7 +43,7 @@ func (h *Hub) run() {
 		case message := <-h.broadcast:
 			for client := range h.clients {
 				select {
-				case client.send <- message.ToWrite():
+				case client.send <- message.toJSON():
 				default:
 					close(client.send)
 					delete(h.clients, client)

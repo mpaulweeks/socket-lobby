@@ -7,6 +7,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -24,11 +25,6 @@ const (
 
 	// Maximum message size allowed from peer.
 	maxMessageSize = 512
-)
-
-var (
-	newline = []byte{'\n'}
-	space   = []byte{' '}
 )
 
 var upgrader = websocket.Upgrader{
@@ -49,6 +45,13 @@ type Client struct {
 
 	// Buffered channel of outbound messages.
 	send chan []byte
+
+	// Unique ID granted by server
+	id string
+}
+
+func genRandomID() string {
+	return strconv.FormatInt(time.Now().Unix(), 10)
 }
 
 // readPump pumps messages from the websocket connection to the hub.
@@ -72,7 +75,6 @@ func (c *Client) readPump() {
 			}
 			break
 		}
-
 		c.hub.broadcast <- newMessage(rawMessage)
 	}
 }
@@ -123,6 +125,20 @@ func (c *Client) writePump() {
 	}
 }
 
+// Write ID to client on Register
+func (c *Client) writeRegister() {
+	w, err := c.conn.NextWriter(websocket.TextMessage)
+	if err != nil {
+		return
+	}
+	message := []byte(c.id)
+	w.Write(message)
+
+	if err := w.Close(); err != nil {
+		return
+	}
+}
+
 // serveWs handles websocket requests from the peer.
 func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -130,7 +146,12 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
+	client := &Client{
+		id:   genRandomID(),
+		hub:  hub,
+		conn: conn,
+		send: make(chan []byte, 256),
+	}
 	client.hub.register <- client
 
 	// Allow collection of memory referenced by the caller by doing all work in
