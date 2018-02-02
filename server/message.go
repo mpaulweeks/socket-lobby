@@ -12,12 +12,37 @@ var (
 	space   = []byte{' '}
 )
 
+// RegisterMessage represents intial contact
+type RegisterMessage struct {
+	Type     string `json:"type"`
+	ClientID string `json:"client_id"`
+}
+
+func (rm *RegisterMessage) toJSON() []byte {
+	b, err := json.Marshal(rm)
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	fmt.Println(string(b))
+	return b
+}
+
+func newRegisterMessage(client *Client) *RegisterMessage {
+	rm := RegisterMessage{
+		Type:     "register",
+		ClientID: client.id,
+	}
+	return &rm
+}
+
 // Message represents payload structure
 type Message struct {
-	App     string `json:"app"`
-	User    string `json:"user"`
-	Lobby   string `json:"lobby"`
-	Message string `json:"message"`
+	Type     string `json:"type"`
+	App      string `json:"app"`
+	ClientID string `json:"client_id"`
+	Lobby    string `json:"lobby"`
+	Message  string `json:"message"`
 }
 
 func (m *Message) toJSON() []byte {
@@ -32,7 +57,9 @@ func (m *Message) toJSON() []byte {
 
 func newMessage(rawMessage []byte) *Message {
 	trimmed := bytes.TrimSpace(bytes.Replace(rawMessage, newline, space, -1))
-	message := Message{}
+	message := Message{
+		Type: "update",
+	}
 	err := json.Unmarshal(trimmed, &message)
 	if err != nil {
 		log.Printf("error: %v", err)

@@ -5,7 +5,7 @@
 <script type="text/javascript">
 window.onload = function () {
     var conn;
-    var user = '' + (new Date()).getTime();
+    var clientId;
     var lobby = document.getElementById("lobby");
     var msg = document.getElementById("msg");
     var log = document.getElementById("log");
@@ -29,7 +29,7 @@ window.onload = function () {
             return false;
         }
         const json = JSON.stringify({
-          user: user,
+          client_id: clientId,
           app: 'chat',
           lobby: lobby.value,
           message: msg.value,
@@ -50,10 +50,15 @@ window.onload = function () {
             console.log(evt.data);
             var messages = evt.data.split('\n');
             for (var i = 0; i < messages.length; i++) {
-                var item = document.createElement("div");
                 const data = JSON.parse(messages[i]);
-                item.innerText = data.user + ' - ' + data.message;
-                appendLog(item);
+                if (data.type === 'register'){
+                  clientId = data.client_id;
+                  console.log(clientId);
+                } else {
+                  var item = document.createElement("div");
+                  item.innerText = data.message;
+                  appendLog(item);
+                }
             }
         };
     } else {

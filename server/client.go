@@ -6,6 +6,7 @@ package main
 
 import (
 	"log"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
@@ -50,8 +51,10 @@ type Client struct {
 	id string
 }
 
-func genRandomID() string {
-	return strconv.FormatInt(time.Now().Unix(), 10)
+func generateClientID() string {
+	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
+	randomExtra := strconv.Itoa(rand.Intn(100000))
+	return timestamp + "-" + randomExtra
 }
 
 // readPump pumps messages from the websocket connection to the hub.
@@ -131,8 +134,8 @@ func (c *Client) writeRegister() {
 	if err != nil {
 		return
 	}
-	message := []byte(c.id)
-	w.Write(message)
+	message := newRegisterMessage(c)
+	w.Write(message.toJSON())
 
 	if err := w.Close(); err != nil {
 		return
@@ -147,7 +150,7 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	client := &Client{
-		id:   genRandomID(),
+		id:   generateClientID(),
 		hub:  hub,
 		conn: conn,
 		send: make(chan []byte, 256),
