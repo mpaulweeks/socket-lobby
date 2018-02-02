@@ -5,9 +5,6 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -54,13 +51,6 @@ type Client struct {
 	send chan []byte
 }
 
-type stateUpdate struct {
-	App     string `json:"app"`
-	User    string `json:"user"`
-	Lobby   string `json:"lobby"`
-	Message string `json:"message"`
-}
-
 // readPump pumps messages from the websocket connection to the hub.
 //
 // The application runs readPump in a per-connection goroutine. The application
@@ -75,22 +65,15 @@ func (c *Client) readPump() {
 	c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
-		_, message, err := c.conn.ReadMessage()
+		_, rawMessage, err := c.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("error: %v", err)
 			}
 			break
 		}
-		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		c.hub.broadcast <- message
 
-		stateUpdateJSON := stateUpdate{}
-		err = json.Unmarshal(message, &stateUpdateJSON)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Printf("\n\n json object:::: %+v", stateUpdateJSON)
+		c.hub.broadcast <- newMessage(rawMessage)
 	}
 }
 
