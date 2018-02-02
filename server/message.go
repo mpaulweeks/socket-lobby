@@ -15,6 +15,7 @@ var (
 // RegisterMessage represents intial contact
 type RegisterMessage struct {
 	Type     string `json:"type"`
+	App      string `json:"app"`
 	ClientID string `json:"client_id"`
 }
 
@@ -31,6 +32,7 @@ func (rm *RegisterMessage) toJSON() []byte {
 func newRegisterMessage(client *Client) *RegisterMessage {
 	rm := RegisterMessage{
 		Type:     "register",
+		App:      client.app,
 		ClientID: client.id,
 	}
 	return &rm
@@ -39,8 +41,8 @@ func newRegisterMessage(client *Client) *RegisterMessage {
 // Message represents payload structure
 type Message struct {
 	Type     string `json:"type"`
-	App      string `json:"app"`
 	ClientID string `json:"client_id"`
+	App      string `json:"app"`
 	Lobby    string `json:"lobby"`
 	Message  string `json:"message"`
 }

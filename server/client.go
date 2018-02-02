@@ -47,8 +47,8 @@ type Client struct {
 	// Buffered channel of outbound messages.
 	send chan []byte
 
-	// Unique ID granted by server
-	id string
+	app string
+	id  string
 }
 
 func generateClientID() string {
@@ -143,13 +143,14 @@ func (c *Client) writeRegister() {
 }
 
 // serveWs handles websocket requests from the peer.
-func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
+func serveWs(hub *Hub, app string, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 	client := &Client{
+		app:  app,
 		id:   generateClientID(),
 		hub:  hub,
 		conn: conn,
