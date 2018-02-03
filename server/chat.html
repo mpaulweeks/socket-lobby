@@ -39,8 +39,15 @@ window.onload = function () {
         return false;
     };
 
-    if (window["WebSocket"]) {
-        conn = new WebSocket("ws://" + document.location.host + "/ws/chat");
+    function setupWebsocket(){
+        const lobbyName = lobby.value;
+        if (!lobbyName) {
+          return;
+        }
+        if (conn) {
+          conn.close();
+        }
+        conn = new WebSocket("ws://" + document.location.host + "/ws/chat/lobby/" + lobbyName);
         conn.onclose = function (evt) {
             var item = document.createElement("div");
             item.innerHTML = "<b>Connection closed.</b>";
@@ -61,11 +68,9 @@ window.onload = function () {
                 }
             }
         };
-    } else {
-        var item = document.createElement("div");
-        item.innerHTML = "<b>Your browser does not support WebSockets.</b>";
-        appendLog(item);
     }
+    lobby.addEventListener('change', setupWebsocket, false);
+    setupWebsocket();
 };
 </script>
 <style type="text/css">
@@ -110,7 +115,7 @@ body {
 <div id="log"></div>
 <form id="form">
     <input type="submit" value="Send" />
-    <input type="text" id="lobby" size="12"/>
+    <input type="text" id="lobby" size="12" value="main"/>
     <input type="text" id="msg" size="64"/>
 </form>
 </body>

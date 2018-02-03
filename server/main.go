@@ -42,10 +42,11 @@ func main() {
 	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, hub.getJSON())
 	})
-	r.HandleFunc("/ws/{app}", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/ws/{app}/lobby/{lobby}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		app := vars["app"]
-		serveWs(hub, app, w, r)
+		lobby := vars["lobby"]
+		serveWs(hub, app, lobby, w, r)
 	})
 
 	err := http.ListenAndServe(*addr, r)

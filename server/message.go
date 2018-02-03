@@ -16,6 +16,7 @@ var (
 type RegisterMessage struct {
 	Type     string `json:"type"`
 	App      string `json:"app"`
+	Lobby    string `json:"lobby"`
 	ClientID string `json:"client_id"`
 }
 
@@ -33,6 +34,7 @@ func newRegisterMessage(client *Client) *RegisterMessage {
 	rm := RegisterMessage{
 		Type:     "register",
 		App:      client.app,
+		Lobby:    client.lobby,
 		ClientID: client.id,
 	}
 	return &rm
