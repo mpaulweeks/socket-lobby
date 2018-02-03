@@ -12,7 +12,25 @@ type ClientPool map[*Client]bool
 
 type LobbyPool map[string]ClientPool
 
+func (lp LobbyPool) getLobby(lobby string) ClientPool {
+	lookup := lp[lobby]
+	if lookup == nil {
+		lookup = make(ClientPool)
+		lp[lobby] = lookup
+	}
+	return lookup
+}
+
 type AppPool map[string]LobbyPool
+
+func (ap AppPool) getApp(app string) LobbyPool {
+	lookup := ap[app]
+	if lookup == nil {
+		lookup = make(LobbyPool)
+		ap[app] = lookup
+	}
+	return lookup
+}
 
 // hub maintains the set of active clients and broadcasts messages to the
 // clients.
@@ -40,42 +58,25 @@ func newHub() *Hub {
 }
 
 func (h *Hub) getClient(client *Client) (bool, bool) {
-	result, ok := h.getLobby(client.app, client.lobby)[client]
+	result, ok := h.clients.getApp(client.app).getLobby(client.lobby)[client]
 	return result, ok
 }
 
 func (h *Hub) setClient(client *Client) {
-	h.getLobby(client.app, client.lobby)[client] = true
+	h.clients.getApp(client.app).getLobby(client.lobby)[client] = true
 }
 
 func (h *Hub) deleteClient(client *Client) {
-	delete(h.getLobby(client.app, client.lobby), client)
-}
-
-func (h *Hub) getLobby(app, lobby string) map[*Client]bool {
-	lookup := h.getApp(app)[lobby]
-	if lookup == nil {
-		lookup = make(ClientPool)
-		h.getApp(app)[lobby] = lookup
-	}
-	return lookup
-}
-
-func (h *Hub) getApp(app string) LobbyPool {
-	lookup := h.clients[app]
-	if lookup == nil {
-		lookup = make(LobbyPool)
-		h.clients[app] = lookup
-	}
-	return lookup
+	delete(h.clients.getApp(client.app).getLobby(client.lobby), client)
 }
 
 func (h *Hub) getJSON() string {
 	newMap := make(map[string][]string)
 	for app := range h.clients {
-		for lobby := range h.getApp(app) {
+		appPool := h.clients.getApp(app)
+		for lobby := range appPool {
 			var clientNames []string
-			for client := range h.getLobby(app, lobby) {
+			for client := range appPool.getLobby(lobby) {
 				clientNames = append(clientNames, client.id)
 			}
 			newMap[app] = clientNames
@@ -85,9 +86,8 @@ func (h *Hub) getJSON() string {
 	jsonBytes, err := json.Marshal(newMap)
 	if err != nil {
 		return err.Error()
-	} else {
-		return string(jsonBytes)
 	}
+	return string(jsonBytes)
 }
 
 func (h *Hub) run() {
@@ -102,7 +102,7 @@ func (h *Hub) run() {
 				close(client.send)
 			}
 		case message := <-h.broadcast:
-			for client := range h.getLobby(message.App, message.Lobby) {
+			for client := range h.clients.getApp(message.App).getLobby(message.Lobby) {
 				if client.id != message.ClientID {
 					select {
 					case client.send <- message.toJSON():
