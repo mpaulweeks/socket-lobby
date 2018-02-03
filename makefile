@@ -1,2 +1,2 @@
 run:
-	cd server && go run *.go
+	cd server && go build && ./server
