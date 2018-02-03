@@ -10,7 +10,9 @@ import (
 
 type ClientPool map[*Client]bool
 
-type AppPool map[string]ClientPool
+type LobbyPool map[string]ClientPool
+
+type AppPool map[string]LobbyPool
 
 // hub maintains the set of active clients and broadcasts messages to the
 // clients.
@@ -37,10 +39,32 @@ func newHub() *Hub {
 	}
 }
 
-func (h *Hub) getApp(app string) map[*Client]bool {
+func (h *Hub) getClient(client *Client) (bool, bool) {
+	result, ok := h.getLobby(client.app, client.lobby)[client]
+	return result, ok
+}
+
+func (h *Hub) setClient(client *Client) {
+	h.getLobby(client.app, client.lobby)[client] = true
+}
+
+func (h *Hub) deleteClient(client *Client) {
+	delete(h.getLobby(client.app, client.lobby), client)
+}
+
+func (h *Hub) getLobby(app, lobby string) map[*Client]bool {
+	lookup := h.getApp(app)[lobby]
+	if lookup == nil {
+		lookup = make(ClientPool)
+		h.getApp(app)[lobby] = lookup
+	}
+	return lookup
+}
+
+func (h *Hub) getApp(app string) LobbyPool {
 	lookup := h.clients[app]
 	if lookup == nil {
-		lookup = make(map[*Client]bool)
+		lookup = make(LobbyPool)
 		h.clients[app] = lookup
 	}
 	return lookup
@@ -49,11 +73,13 @@ func (h *Hub) getApp(app string) map[*Client]bool {
 func (h *Hub) getJSON() string {
 	newMap := make(map[string][]string)
 	for app := range h.clients {
-		var clientNames []string
-		for client := range h.getApp(app) {
-			clientNames = append(clientNames, client.id)
+		for lobby := range h.getApp(app) {
+			var clientNames []string
+			for client := range h.getLobby(app, lobby) {
+				clientNames = append(clientNames, client.id)
+			}
+			newMap[app] = clientNames
 		}
-		newMap[app] = clientNames
 	}
 
 	jsonBytes, err := json.Marshal(newMap)
@@ -68,21 +94,21 @@ func (h *Hub) run() {
 	for {
 		select {
 		case client := <-h.register:
-			h.getApp(client.app)[client] = true
+			h.setClient(client)
 			client.writeRegister()
 		case client := <-h.unregister:
-			if _, ok := h.getApp(client.app)[client]; ok {
-				delete(h.getApp(client.app), client)
+			if _, ok := h.getClient(client); ok {
+				h.deleteClient(client)
 				close(client.send)
 			}
 		case message := <-h.broadcast:
-			for client := range h.getApp(message.App) {
+			for client := range h.getLobby(message.App, message.Lobby) {
 				if client.id != message.ClientID {
 					select {
 					case client.send <- message.toJSON():
 					default:
 						close(client.send)
-						delete(h.getApp(client.app), client)
+						h.deleteClient(client)
 					}
 				}
 			}
