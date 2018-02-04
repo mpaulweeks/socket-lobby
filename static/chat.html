@@ -4,64 +4,75 @@
 <title>Chat Example</title>
 <script src="/js/library.js"></script>
 <script type="text/javascript">
-window.SL = new SocketLobby(document.location.host, 'chat');
-window.onload = function () {
-    var lobby = document.getElementById("lobby");
-    var name = document.getElementById("name");
-    var msg = document.getElementById("msg");
-    var log = document.getElementById("log");
 
-    function appendLog(item) {
-        var doScroll = log.scrollTop > log.scrollHeight - log.clientHeight - 1;
-        log.appendChild(item);
-        if (doScroll) {
-            log.scrollTop = log.scrollHeight - log.clientHeight;
-        }
-    }
-    function createLog(color, data) {
-      var item = document.createElement("div");
-      item.style.color = color;
-      item.innerText = data.name + ' - ' + data.message;
-      return item;
-    }
+const SL = new SocketLobby(document.location.host, 'chat');
+function lobbyWindow(){
+  SL.fetchLobbies().then(data => {
+    document.body.innerHTML = JSON.stringify(data);
+  });
+}
+function chatWindow(){
+  var lobby = document.getElementById("lobby");
+  var name = document.getElementById("name");
+  var msg = document.getElementById("msg");
+  var log = document.getElementById("log");
 
-    document.getElementById("form").onsubmit = function () {
-        if (!lobby.value) {
-            return false;
-        }
-        if (!name.value) {
-            return false;
-        }
-        if (!msg.value) {
-            return false;
-        }
-        const message = {
-          name: name.value,
-          message: msg.value,
-        };
-        window.SL.send(JSON.stringify(message));
-        appendLog(createLog('blue', message));
-        msg.value = "";
-        return false;
+  function appendLog(item) {
+    var doScroll = log.scrollTop > log.scrollHeight - log.clientHeight - 1;
+    log.appendChild(item);
+    if (doScroll) {
+      log.scrollTop = log.scrollHeight - log.clientHeight;
+    }
+  }
+
+  function createLog(color, data) {
+    var item = document.createElement("div");
+    item.style.color = color;
+    item.innerText = data.name + ' - ' + data.message;
+    return item;
+  }
+
+  document.getElementById("form").onsubmit = function() {
+    if (!lobby.value) {
+      return false;
+    }
+    if (!name.value) {
+      return false;
+    }
+    if (!msg.value) {
+      return false;
+    }
+    const message = {
+      name: name.value,
+      message: msg.value,
     };
-    document.getElementById("spam").addEventListener('click', () => {
-      Array.apply(null, Array(5)).map((_, i) => {
-        msg.value = i;
-        document.getElementById("submit").click();
-      });
+    SL.send(JSON.stringify(message));
+    appendLog(createLog('blue', message));
+    msg.value = "";
+    return false;
+  };
+  document.getElementById("spam").addEventListener('click', () => {
+    Array.apply(null, Array(5)).map((_, i) => {
+      msg.value = i;
+      document.getElementById("submit").click();
     });
+  });
 
-    function onMessages(updates){
-      updates.forEach(update => {
-        const data = JSON.parse(update.message);
-        appendLog(createLog('black', data));
-      });
-    }
-    function setupWebsocket(){
-      window.SL.connect(lobby.value, onMessages);
-    }
-    lobby.addEventListener('change', setupWebsocket, false);
-    setupWebsocket();
+  function onMessages(updates) {
+    updates.forEach(update => {
+      const data = JSON.parse(update.message);
+      appendLog(createLog('black', data));
+    });
+  }
+
+  function setupWebsocket() {
+    SL.connect(lobby.value, onMessages);
+  }
+  lobby.addEventListener('change', setupWebsocket, false);
+  setupWebsocket();
+}
+window.onload = function () {
+  lobbyWindow();
 };
 </script>
 <style type="text/css">

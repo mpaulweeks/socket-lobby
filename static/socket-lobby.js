@@ -12,6 +12,19 @@ class SocketLobby {
   log(...args) {
     this.logFunc(...args);
   }
+
+  fetchApi(path) {
+    return (
+      fetch(`http://${this.baseUrl}/api/app/${this.app}/${path}`)
+      .then(resp => {
+         return resp.json();
+      })
+    );
+  }
+  fetchLobbies() {
+    return this.fetchApi('lobbies');
+  }
+
   reconnect() {
     const { lobby, onUpdates } = this.state;
     if (lobby){
