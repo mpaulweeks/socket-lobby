@@ -1,7 +1,5 @@
 package main
 
-import "encoding/json"
-
 type ClientPool map[*Client]bool
 
 func (cp ClientPool) getInfo() []string {
@@ -10,15 +8,6 @@ func (cp ClientPool) getInfo() []string {
 		clientNames = append(clientNames, client.id)
 	}
 	return clientNames
-}
-
-func (cp ClientPool) getJSON() string {
-	info := cp.getInfo()
-	jsonBytes, err := json.Marshal(info)
-	if err != nil {
-		return err.Error()
-	}
-	return string(jsonBytes)
 }
 
 type LobbyPool map[string]ClientPool
@@ -40,13 +29,12 @@ func (lp LobbyPool) getInfo() map[string][]string {
 	return clients
 }
 
-func (lp LobbyPool) getJSON() string {
-	info := lp.getInfo()
-	jsonBytes, err := json.Marshal(info)
-	if err != nil {
-		return err.Error()
+func (lp LobbyPool) getHeadCount() map[string]int {
+	clients := make(map[string]int)
+	for lobbyID := range lp {
+		clients[lobbyID] = len(lp.getLobby(lobbyID).getInfo())
 	}
-	return string(jsonBytes)
+	return clients
 }
 
 type AppPool map[string]LobbyPool
@@ -63,17 +51,15 @@ func (ap AppPool) getApp(app string) LobbyPool {
 func (ap AppPool) getInfo() map[string]map[string][]string {
 	newMap := make(map[string]map[string][]string)
 	for appID := range ap {
-		lobbyPool := ap.getApp(appID)
-		newMap[appID] = lobbyPool.getInfo()
+		newMap[appID] = ap.getApp(appID).getInfo()
 	}
 	return newMap
 }
 
-func (ap AppPool) getJSON() string {
-	info := ap.getInfo()
-	jsonBytes, err := json.Marshal(info)
-	if err != nil {
-		return err.Error()
+func (ap AppPool) getHeadCount() map[string]int {
+	newMap := make(map[string]int)
+	for appID := range ap {
+		newMap[appID] = len(ap.getApp(appID).getInfo())
 	}
-	return string(jsonBytes)
+	return newMap
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"io"
 	"log"
 	"net/http"
@@ -18,6 +19,16 @@ func newServer() *Server {
 	return &Server{
 		hub: hub,
 	}
+}
+
+func (s *Server) serveJSON(w http.ResponseWriter, info interface{}) {
+	jsonBytes, err := json.Marshal(info)
+	if err != nil {
+		// todo
+		io.WriteString(w, err.Error())
+	}
+	out := string(jsonBytes)
+	io.WriteString(w, out)
 }
 
 func (s *Server) serveChat(w http.ResponseWriter, r *http.Request) {
@@ -39,28 +50,28 @@ func (s *Server) serveLibrary(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) serveRoot(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/health", http.StatusFound)
+	http.Redirect(w, r, "/api/health", http.StatusFound)
 }
 
 func (s *Server) serveHealth(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, s.hub.clients.getJSON())
+	s.serveJSON(w, s.hub.clients.getInfo())
 }
 
 func (s *Server) serveApiInfo(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, s.hub.clients.getJSON())
+	s.serveJSON(w, s.hub.clients.getHeadCount())
 }
 
 func (s *Server) serveAppInfo(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	app := vars["app"]
-	io.WriteString(w, s.hub.clients.getApp(app).getJSON())
+	s.serveJSON(w, s.hub.clients.getApp(app).getHeadCount())
 }
 
 func (s *Server) serveLobbyInfo(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	app := vars["app"]
 	lobby := vars["lobby"]
-	io.WriteString(w, s.hub.clients.getApp(app).getLobby(lobby).getJSON())
+	s.serveJSON(w, s.hub.clients.getApp(app).getLobby(lobby).getInfo())
 }
 
 func (s *Server) serveWebsocket(w http.ResponseWriter, r *http.Request) {
