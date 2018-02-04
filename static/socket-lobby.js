@@ -12,7 +12,7 @@ class SocketLobby {
   log(...args) {
     this.logFunc(...args);
   }
-  connect(lobby, onMessage, onClose) {
+  connect(lobby, onUpdates, onClose) {
     if (!lobby){
       throw 'invalid lobby';
     }
@@ -20,44 +20,63 @@ class SocketLobby {
       throw 'not configured';
     }
 
+    // close existing conn if able
     this.close();
+
+    // handle existing queue
+    if (lobby !== this.lobby){
+      // new lobby, clear old queue
+      this.queue = [];
+    }
+
+    // create new conn, set new lobby
     const conn = new WebSocket(`ws://${this.baseUrl}/ws/${this.app}/lobby/${lobby}`);
     this.conn = conn;
     this.lobby = lobby;
 
+    // setup listeners
     const self = this;
     conn.onclose = function (evt) {
-      onClose();
+      self.close(onClose);
     };
     conn.onmessage = function (evt) {
-      self.log("received:", evt.data);
-      const messages = evt.data.split('\n').map(m => JSON.parse(m));
-      const updates = [];
-      messages.forEach(m => {
-        if (m.type === 'register'){
-          conn.clientId = m.client_id;
-          self.log("registered:", conn);
-        } else {
-          updates.push(m);
-        }
-      });
-      onMessage(updates);
+      self.receive(evt, onUpdates);
     };
-
-    if (lobby !== this.lobby){
-      this.queue = [];
-    } else {
-      // reconnecting
-      this.dequeue();
-    }
-
   }
-  close() {
+  close(onClose) {
     if (this.conn){
-      this.conn.close();
+      try {
+        this.conn.close();
+      } catch (err) {
+        // do nothing
+      }
       this.conn = null;
     }
+    if (onClose) {
+      onClose();
+    }
   }
+  receive(evt, onUpdates) {
+    const self = this;
+    self.log("received:", evt.data);
+
+    const messages = evt.data.split('\n').map(m => JSON.parse(m));
+    const updates = [];
+    messages.forEach(m => {
+      if (m.type === 'register'){
+        if (self.conn) {
+          self.log("registered:", self.conn);
+          self.conn.clientId = m.client_id;
+        }
+      } else {
+        updates.push(m);
+      }
+    });
+    if (onUpdates) {
+      onUpdates(updates);
+    }
+  }
+
   send(message) {
     this.queue.push(message);
     this.dequeue();
