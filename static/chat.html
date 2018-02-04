@@ -7,6 +7,7 @@
 window.SL = new SocketLobby(document.location.host, 'chat');
 window.onload = function () {
     var lobby = document.getElementById("lobby");
+    var name = document.getElementById("name");
     var msg = document.getElementById("msg");
     var log = document.getElementById("log");
 
@@ -17,42 +18,50 @@ window.onload = function () {
             log.scrollTop = log.scrollHeight - log.clientHeight;
         }
     }
+    function createLog(color, data) {
+      var item = document.createElement("div");
+      item.style.color = color;
+      item.innerText = data.name + ' - ' + data.message;
+      return item;
+    }
 
     document.getElementById("form").onsubmit = function () {
         if (!lobby.value) {
             return false;
         }
+        if (!name.value) {
+            return false;
+        }
         if (!msg.value) {
             return false;
         }
-        window.SL.send(msg.value);
+        const message = {
+          name: name.value,
+          message: msg.value,
+        };
+        window.SL.send(JSON.stringify(message));
+        appendLog(createLog('blue', message));
         msg.value = "";
         return false;
     };
+    document.getElementById("spam").addEventListener('click', () => {
+      Array.apply(null, Array(5)).map((_, i) => {
+        msg.value = i;
+        document.getElementById("submit").click();
+      });
+    });
 
-    function onClose(){
-      var item = document.createElement("div");
-      item.innerHTML = "<b>Connection closed.</b>";
-      appendLog(item);
-    }
     function onMessages(updates){
-      updates.forEach(data => {
-        var item = document.createElement("div");
-        item.innerText = data.message;
-        appendLog(item);
+      updates.forEach(update => {
+        const data = JSON.parse(update.message);
+        appendLog(createLog('black', data));
       });
     }
     function setupWebsocket(){
-      window.SL.connect(lobby.value, onMessages, onClose);
+      window.SL.connect(lobby.value, onMessages);
     }
     lobby.addEventListener('change', setupWebsocket, false);
     setupWebsocket();
-
-    // testing
-    Array.apply(null, Array(5)).map((_, i) => {
-      msg.value = i;
-      document.getElementById("submit").click();
-    });
 };
 </script>
 <style type="text/css">
@@ -69,12 +78,22 @@ body {
     background: gray;
 }
 
+#top {
+    padding: 0 0.5em 0 0.5em;
+    margin: 0;
+    position: absolute;
+    top: 1em;
+    left: 0px;
+    width: 100%;
+    overflow: hidden;
+}
+
 #log {
     background: white;
     margin: 0;
     padding: 0.5em 0.5em 0.5em 0.5em;
     position: absolute;
-    top: 0.5em;
+    top: 3em;
     left: 0.5em;
     right: 0.5em;
     bottom: 3em;
@@ -94,11 +113,18 @@ body {
 </style>
 </head>
 <body>
+<div id="top">
+  <span>lobby</span>
+  <input type="text" id="lobby" size="12" value="main"/>
+</div>
 <div id="log"></div>
 <form id="form">
     <input id="submit" type="submit" value="Send" />
-    <input type="text" id="lobby" size="12" value="main"/>
+    <span>name:</span>
+    <input type="text" id="name" size="12" value="Anonymous"/>
+    <span>message:</span>
     <input type="text" id="msg" size="64"/>
+    <button id="spam">SPAM</button>
 </form>
 </body>
 </html>
