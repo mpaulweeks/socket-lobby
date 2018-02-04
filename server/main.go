@@ -21,14 +21,20 @@ func serveChat(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", 405)
 		return
 	}
-	http.ServeFile(w, r, "chat.html")
+	http.ServeFile(w, r, "../static/chat.html")
+}
+
+func serveSocketLobby(w http.ResponseWriter, r *http.Request) {
+	log.Println(r.URL)
+	if r.Method != "GET" {
+		http.Error(w, "Method not allowed", 405)
+		return
+	}
+	http.ServeFile(w, r, "../static/socket-lobby.js")
 }
 
 func serveRoot(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/health", http.StatusFound)
-}
-
-func serveHealth(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
@@ -39,8 +45,9 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/", serveRoot)
 	r.HandleFunc("/chat", serveChat)
+	r.HandleFunc("/library.js", serveSocketLobby)
 	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		io.WriteString(w, hub.getJSON())
+		io.WriteString(w, hub.clients.getJSON())
 	})
 	r.HandleFunc("/ws/{app}/lobby/{lobby}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)

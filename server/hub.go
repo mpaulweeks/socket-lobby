@@ -4,34 +4,6 @@
 
 package main
 
-import (
-	"encoding/json"
-)
-
-type ClientPool map[*Client]bool
-
-type LobbyPool map[string]ClientPool
-
-func (lp LobbyPool) getLobby(lobby string) ClientPool {
-	lookup := lp[lobby]
-	if lookup == nil {
-		lookup = make(ClientPool)
-		lp[lobby] = lookup
-	}
-	return lookup
-}
-
-type AppPool map[string]LobbyPool
-
-func (ap AppPool) getApp(app string) LobbyPool {
-	lookup := ap[app]
-	if lookup == nil {
-		lookup = make(LobbyPool)
-		ap[app] = lookup
-	}
-	return lookup
-}
-
 // hub maintains the set of active clients and broadcasts messages to the
 // clients.
 type Hub struct {
@@ -68,26 +40,6 @@ func (h *Hub) setClient(client *Client) {
 
 func (h *Hub) deleteClient(client *Client) {
 	delete(h.clients.getApp(client.app).getLobby(client.lobby), client)
-}
-
-func (h *Hub) getJSON() string {
-	newMap := make(map[string][]string)
-	for app := range h.clients {
-		appPool := h.clients.getApp(app)
-		for lobby := range appPool {
-			var clientNames []string
-			for client := range appPool.getLobby(lobby) {
-				clientNames = append(clientNames, client.id)
-			}
-			newMap[app] = clientNames
-		}
-	}
-
-	jsonBytes, err := json.Marshal(newMap)
-	if err != nil {
-		return err.Error()
-	}
-	return string(jsonBytes)
 }
 
 func (h *Hub) run() {
