@@ -14,4 +14,4 @@
 .glide/
 
 # socket-lobby specific
-server/server
+lobby-server/lobby-server
