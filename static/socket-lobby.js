@@ -1,17 +1,18 @@
 
-class _SocketLobby {
-  constructor() {
-    this.conn = null;
-    this.baseUrl = null;
-    this.app = null;
-  }
-  config(baseUrl, app) {
+class SocketLobby {
+  constructor(baseUrl, app, logFunc) {
     this.baseUrl = baseUrl;
     this.app = app;
+    this.logFunc = logFunc || console.log;
+    this.lobby = null;
+    this.conn = null;
+    this.queue = [];
+    this.dequeueInterval = setInterval(() => this.dequeue(), 100);
   }
-
+  log(...args) {
+    this.logFunc(...args);
+  }
   connect(lobby, onMessage, onClose) {
-    console.log('starting');
     if (!lobby){
       throw 'invalid lobby';
     }
@@ -22,55 +23,71 @@ class _SocketLobby {
     this.close();
     const conn = new WebSocket(`ws://${this.baseUrl}/ws/${this.app}/lobby/${lobby}`);
     this.conn = conn;
-    conn.lobby = lobby;
+    this.lobby = lobby;
 
+    const self = this;
     conn.onclose = function (evt) {
       onClose();
     };
-
     conn.onmessage = function (evt) {
-      console.log(evt.data);
+      self.log("received:", evt.data);
       const messages = evt.data.split('\n').map(m => JSON.parse(m));
       const updates = [];
       messages.forEach(m => {
         if (m.type === 'register'){
           conn.clientId = m.client_id;
-          console.log(conn);
+          self.log("registered:", conn);
         } else {
           updates.push(m);
         }
       });
       onMessage(updates);
     };
+
+    if (lobby !== this.lobby){
+      this.queue = [];
+    } else {
+      // reconnecting
+      this.dequeue();
+    }
+
   }
   close() {
     if (this.conn){
       this.conn.close();
+      this.conn = null;
     }
   }
-  send(message, attempt) {
-    attempt = attempt || 0;
-    const self = this;
-
-    if (!this.conn || !this.conn.clientId){
-      if (attempt < 10){
-        setTimeout(() => {
-          self.send(message, attempt + 1);
-        }, 100);
-        return;
-      } else {
-        throw `retried send ${attempt}' times`;
-      }
+  send(message) {
+    this.queue.push(message);
+    this.dequeue();
+  }
+  dequeue() {
+    if (!this.conn || !this.conn.clientId) {
+      return;
     }
-
-    const payload = JSON.stringify({
-      app: this.app,
-      lobby: this.conn.lobby,
-      client_id: this.conn.clientId,
-      message: message,
+    if (this.conn.readyState !== 1) {
+      return;
+    }
+    // todo race condition on queue
+    // look into mutex lock?
+    let newQueue = [];
+    const { queue, app, lobby, conn } = this;
+    const self = this;
+    queue.forEach(message => {
+      try {
+        const payload = JSON.stringify({
+          app: app,
+          lobby: lobby,
+          client_id: conn.clientId,
+          message: message,
+        });
+        conn.send(payload);
+        self.log('sent:', payload);
+      } catch(err) {
+        newQueue.push(message);
+      }
     });
-    this.conn.send(payload);
+    this.queue = newQueue;
   }
 }
-
-const SocketLobby = new _SocketLobby();
