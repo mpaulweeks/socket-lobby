@@ -29,7 +29,7 @@ func (s *Server) serveChat(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "../static/chat.html")
 }
 
-func (s *Server) serveSocketLobby(w http.ResponseWriter, r *http.Request) {
+func (s *Server) serveLibrary(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.URL)
 	if r.Method != "GET" {
 		http.Error(w, "Method not allowed", 405)
@@ -44,6 +44,23 @@ func (s *Server) serveRoot(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) serveHealth(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, s.hub.clients.getJSON())
+}
+
+func (s *Server) serveApiInfo(w http.ResponseWriter, r *http.Request) {
+	io.WriteString(w, s.hub.clients.getJSON())
+}
+
+func (s *Server) serveAppInfo(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	app := vars["app"]
+	io.WriteString(w, s.hub.clients.getApp(app).getJSON())
+}
+
+func (s *Server) serveLobbyInfo(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	app := vars["app"]
+	lobby := vars["lobby"]
+	io.WriteString(w, s.hub.clients.getApp(app).getLobby(lobby).getJSON())
 }
 
 func (s *Server) serveWebsocket(w http.ResponseWriter, r *http.Request) {

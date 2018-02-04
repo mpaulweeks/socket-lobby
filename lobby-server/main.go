@@ -23,8 +23,11 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/", s.serveRoot)
 	r.HandleFunc("/chat", s.serveChat)
-	r.HandleFunc("/library.js", s.serveSocketLobby)
+	r.HandleFunc("/library.js", s.serveLibrary)
 	r.HandleFunc("/health", s.serveHealth)
+	r.HandleFunc("/api/apps", s.serveApiInfo)
+	r.HandleFunc("/api/app/{app}/lobbies", s.serveAppInfo)
+	r.HandleFunc("/api/app/{app}/lobby/{lobby}/clients", s.serveLobbyInfo)
 	r.HandleFunc("/ws/app/{app}/lobby/{lobby}", s.serveWebsocket)
 
 	fmt.Println(*addr)
