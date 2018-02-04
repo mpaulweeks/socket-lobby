@@ -6,6 +6,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -49,13 +50,14 @@ func main() {
 	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, hub.clients.getJSON())
 	})
-	r.HandleFunc("/ws/{app}/lobby/{lobby}", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/ws/app/{app}/lobby/{lobby}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		app := vars["app"]
 		lobby := vars["lobby"]
 		serveWs(hub, app, lobby, w, r)
 	})
 
+	fmt.Println(*addr)
 	err := http.ListenAndServe(*addr, r)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)

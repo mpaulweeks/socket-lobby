@@ -41,7 +41,7 @@ class SocketLobby {
     };
 
     // create new conn, set new lobby
-    const conn = new WebSocket(`ws://${this.baseUrl}/ws/${this.app}/lobby/${lobby}`);
+    const conn = new WebSocket(`ws://${this.baseUrl}/ws/app/${this.app}/lobby/${lobby}`);
     this.conn = conn;
     const self = this;
     conn.onmessage = function (evt) {
