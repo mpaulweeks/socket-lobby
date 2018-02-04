@@ -4,8 +4,8 @@
 <title>Chat Example</title>
 <script src="/library.js"></script>
 <script type="text/javascript">
+SocketLobby.config(document.location.host, 'chat');
 window.onload = function () {
-    SocketLobby.config(document.location.host, 'chat');
     var lobby = document.getElementById("lobby");
     var msg = document.getElementById("msg");
     var log = document.getElementById("log");
