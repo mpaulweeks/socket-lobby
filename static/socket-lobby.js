@@ -4,15 +4,22 @@ class SocketLobby {
     this.baseUrl = baseUrl;
     this.app = app;
     this.logFunc = logFunc || console.log;
-    this.lobby = null;
     this.conn = null;
+    this.state = {};
     this.queue = [];
     this.dequeueInterval = setInterval(() => this.dequeue(), 100);
   }
   log(...args) {
     this.logFunc(...args);
   }
-  connect(lobby, onUpdates, onClose) {
+  reconnect() {
+    const { lobby, onUpdates } = this.state;
+    if (lobby){
+      this.log("reconnecting...")
+      this.connect(lobby, onUpdates);
+    }
+  }
+  connect(lobby, onUpdates) {
     if (!lobby){
       throw 'invalid lobby';
     }
@@ -24,39 +31,43 @@ class SocketLobby {
     this.close();
 
     // handle existing queue
-    if (lobby !== this.lobby){
+    if (lobby !== this.state.lobby){
       // new lobby, clear old queue
       this.queue = [];
     }
+    this.state = {
+      lobby: lobby,
+      onUpdates: onUpdates,
+    };
 
     // create new conn, set new lobby
     const conn = new WebSocket(`ws://${this.baseUrl}/ws/${this.app}/lobby/${lobby}`);
     this.conn = conn;
-    this.lobby = lobby;
-
-    // setup listeners
     const self = this;
-    conn.onclose = function (evt) {
-      self.close(onClose);
-    };
     conn.onmessage = function (evt) {
-      self.receive(evt, onUpdates);
+      self.receive(evt);
+    };
+    conn.onclose = function(evt) {
+      if (evt.code == 3001) {
+        // closed
+        self.conn = null;
+      } else {
+        // connection error
+        self.conn = null;
+      }
+    };
+    conn.onerror = function(evt) {
+      if (conn.readyState !== 1) {
+        self.close();
+      }
     };
   }
-  close(onClose) {
+  close() {
     if (this.conn){
-      try {
-        this.conn.close();
-      } catch (err) {
-        // do nothing
-      }
-      this.conn = null;
-    }
-    if (onClose) {
-      onClose();
+      this.conn.close();
     }
   }
-  receive(evt, onUpdates) {
+  receive(evt) {
     const self = this;
     self.log("received:", evt.data);
 
@@ -65,15 +76,15 @@ class SocketLobby {
     messages.forEach(m => {
       if (m.type === 'register'){
         if (self.conn) {
-          self.log("registered:", self.conn);
+          self.log("registered:", m.client_id);
           self.conn.clientId = m.client_id;
         }
       } else {
         updates.push(m);
       }
     });
-    if (onUpdates) {
-      onUpdates(updates);
+    if (this.state.onUpdates) {
+      this.state.onUpdates(updates);
     }
   }
 
@@ -82,29 +93,36 @@ class SocketLobby {
     this.dequeue();
   }
   dequeue() {
-    if (!this.conn || !this.conn.clientId) {
+    // https://developer.mozilla.org/en-US/docs/Web/API/WebSocket#Ready_state_constants
+    if (this.conn === null || this.conn.readyState === 3) {
+      // dead or dying, reconnect it
+      this.reconnect();
       return;
     }
-    if (this.conn.readyState !== 1) {
+    if (this.conn.readyState !== 1 || !this.conn.clientId) {
+      // not ready, wait for future dequeue
       return;
     }
-    // todo race condition on queue
-    // look into mutex lock?
-    let newQueue = [];
-    const { queue, app, lobby, conn } = this;
+
+    // race condition avoided thanks to JS event loop
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop
+    const { queue, app, state, conn } = this;
     const self = this;
+    const newQueue = [];
     queue.forEach(message => {
+      const payload = JSON.stringify({
+        app: app,
+        lobby: state.lobby,
+        client_id: conn.clientId,
+        message: message,
+      });
       try {
-        const payload = JSON.stringify({
-          app: app,
-          lobby: lobby,
-          client_id: conn.clientId,
-          message: message,
-        });
         conn.send(payload);
         self.log('sent:', payload);
       } catch(err) {
+        // send failed, try again later
         newQueue.push(message);
+        self.log('queued:', payload);
       }
     });
     this.queue = newQueue;
