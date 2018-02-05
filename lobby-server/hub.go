@@ -4,6 +4,8 @@
 
 package main
 
+import "fmt"
+
 // hub maintains the set of active clients and broadcasts messages to the
 // clients.
 type Hub struct {
@@ -51,6 +53,10 @@ func (h *Hub) broadcastMessage(client *Client, message *Message) {
 	}
 }
 
+func (h *Hub) triggerLobbyRefresh(client *Client) {
+	h.broadcast <- newLobbyRefreshMessage(client)
+}
+
 func (h *Hub) run() {
 	for {
 		select {
@@ -61,6 +67,7 @@ func (h *Hub) run() {
 			if _, ok := h.getClient(client); ok {
 				h.deleteClient(client)
 				close(client.send)
+				go h.triggerLobbyRefresh(client)
 			}
 		case message := <-h.broadcast:
 			lobby := h.clients.getApp(message.App).getLobby(message.Lobby)
@@ -68,9 +75,12 @@ func (h *Hub) run() {
 				if message.Type == "info" {
 					if client.id == message.ClientID {
 						client.blob = message.Message
+						go h.triggerLobbyRefresh(client)
 					}
-					lobbyRefresh := newLobbyRefreshMessage(message)
-					h.broadcastMessage(client, lobbyRefresh)
+				}
+				if message.Type == "lobby_refresh" {
+					fmt.Println("we got there")
+					h.broadcastMessage(client, message)
 				}
 				if message.Type == "update" {
 					if client.id != message.ClientID {

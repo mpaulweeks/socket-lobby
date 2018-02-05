@@ -71,12 +71,12 @@ func newMessage(rawMessage []byte) *Message {
 	return &message
 }
 
-func newLobbyRefreshMessage(info *Message) *Message {
+func newLobbyRefreshMessage(client *Client) *Message {
 	message := Message{
 		Type:     "lobby_refresh",
-		App:      info.App,
-		Lobby:    info.Lobby,
-		ClientID: info.ClientID,
+		App:      client.app,
+		Lobby:    client.lobby,
+		ClientID: client.id,
 		Message:  "{}",
 	}
 	return &message
