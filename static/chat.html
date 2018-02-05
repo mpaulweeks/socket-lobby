@@ -9,6 +9,11 @@ const SL = new SocketLobby(document.location.host, 'chat');
 function lobbyWindow(){
   SL.fetchLobbies().then(data => {
     console.log("fetch lobbies:", data);
+    data.forEach(d => {
+      SL.fetchLobbyUsers(d.lobby).then(lobbyData => {
+        console.log("lobby data:", lobbyData);
+      })
+    })
   });
 }
 function chatWindow(){

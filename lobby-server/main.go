@@ -26,7 +26,7 @@ func main() {
 	r.HandleFunc("/js/library.js", s.serveLibrary)
 	r.HandleFunc("/api/health", s.serveHealth)
 	r.HandleFunc("/api/app/{app}/lobbies", s.serveAppInfo)
-	r.HandleFunc("/api/app/{app}/lobby/{lobby}/clients", s.serveLobbyInfo)
+	r.HandleFunc("/api/app/{app}/lobby/{lobby}/users", s.serveLobbyInfo)
 	r.HandleFunc("/ws/app/{app}/lobby/{lobby}", s.serveWebsocket)
 
 	fmt.Println(*addr)

@@ -24,6 +24,9 @@ class SocketLobby {
   fetchLobbies() {
     return this.fetchApi('lobbies');
   }
+  fetchLobbyUsers(lobby) {
+    return this.fetchApi(`lobby/${lobby}/users`);
+  }
 
   reconnect() {
     const { lobby, onUpdates } = this.state;
