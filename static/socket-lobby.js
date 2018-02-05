@@ -32,7 +32,7 @@ class SocketLobby {
     const { lobby, onUpdates } = this.state;
     if (lobby){
       this.log("reconnecting...")
-      this.connect(lobby, onUpdates);
+      this.connect(lobby, onLobbyRefresh, onUpdates);
     }
   }
   connect(lobby, onLobbyRefresh, onUpdates) {
