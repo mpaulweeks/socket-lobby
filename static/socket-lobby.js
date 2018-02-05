@@ -35,7 +35,7 @@ class SocketLobby {
       this.connect(lobby, onUpdates);
     }
   }
-  connect(lobby, onUpdates) {
+  connect(lobby, onLobbyRefresh, onUpdates) {
     if (!lobby){
       throw 'invalid lobby';
     }
@@ -53,6 +53,7 @@ class SocketLobby {
     }
     this.state = {
       lobby: lobby,
+      onLobbyRefresh: onLobbyRefresh,
       onUpdates: onUpdates,
     };
 
@@ -101,8 +102,9 @@ class SocketLobby {
           updates.push(m);
           break;
         case 'lobby_refresh':
-          // todo
-          self.log('triggered lobby_refresh');
+          if (self.state.onLobbyRefresh){
+            self.state.onLobbyRefresh();
+          }
           break;
         default:
           throw "unexpected message type: " + m.type;

@@ -43,13 +43,11 @@ func (h *Hub) deleteClient(client *Client) {
 }
 
 func (h *Hub) broadcastMessage(client *Client, message *Message) {
-	if client.id != message.ClientID {
-		select {
-		case client.send <- message.toJSON():
-		default:
-			close(client.send)
-			h.deleteClient(client)
-		}
+	select {
+	case client.send <- message.toJSON():
+	default:
+		close(client.send)
+		h.deleteClient(client)
 	}
 }
 
@@ -75,7 +73,9 @@ func (h *Hub) run() {
 					h.broadcastMessage(client, lobbyRefresh)
 				}
 				if message.Type == "update" {
-					h.broadcastMessage(client, message)
+					if client.id != message.ClientID {
+						h.broadcastMessage(client, message)
+					}
 				}
 			}
 		}

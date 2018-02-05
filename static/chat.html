@@ -6,21 +6,12 @@
 <script type="text/javascript">
 
 const SL = new SocketLobby(document.location.host, 'chat');
-function lobbyWindow(){
-  SL.fetchLobbies().then(data => {
-    console.log("fetch lobbies:", data);
-    data.forEach(d => {
-      SL.fetchLobbyUsers(d.lobby).then(lobbyData => {
-        console.log("lobby data:", lobbyData);
-      })
-    })
-  });
-}
 function chatWindow(){
   var lobby = document.getElementById("lobby");
   var name = document.getElementById("name");
   var msg = document.getElementById("msg");
   var log = document.getElementById("log");
+  const lobbyInfoElm = document.getElementById("lobby-info");
 
   function appendLog(item) {
     var doScroll = log.scrollTop > log.scrollHeight - log.clientHeight - 1;
@@ -41,6 +32,24 @@ function chatWindow(){
       "name": name.value,
     };
     SL.sendInfo(JSON.stringify(info));
+  }
+  function onLobbyRefresh() {
+    SL.fetchLobbyUsers(lobby.value).then(lobbyData => {
+      console.log('fetched lobby:', lobbyData);
+      if (!lobbyData){
+        return;
+      }
+      let lobbyInfoHTML = '';
+      lobbyData.forEach(userData => {
+        const userInfo = JSON.parse(userData.blob);
+        if (userInfo.name){
+          lobbyInfoHTML += `
+            <span class="user-name">${userInfo.name}</span>
+          `;
+        }
+      });
+      lobbyInfoElm.innerHTML = lobbyInfoHTML;
+    });
   }
 
   name.addEventListener('change', sendInfo);
@@ -70,7 +79,7 @@ function chatWindow(){
     });
   });
 
-  function onMessages(updates) {
+  function onUpdates(updates) {
     updates.forEach(update => {
       const data = JSON.parse(update.message);
       appendLog(createLog('black', data));
@@ -78,14 +87,14 @@ function chatWindow(){
   }
 
   function setupWebsocket() {
-    SL.connect(lobby.value, onMessages);
-    sendInfo();
+    SL.connect(lobby.value, onLobbyRefresh, onUpdates);
   }
   lobby.addEventListener('change', setupWebsocket, false);
   setupWebsocket();
+  onLobbyRefresh();
+  sendInfo();
 }
 window.onload = function () {
-  lobbyWindow();
   chatWindow();
 };
 </script>
@@ -112,7 +121,6 @@ body {
     width: 100%;
     overflow: hidden;
 }
-
 #log {
     background: white;
     margin: 0;
@@ -124,7 +132,6 @@ body {
     bottom: 3em;
     overflow: auto;
 }
-
 #form {
     padding: 0 0.5em 0 0.5em;
     margin: 0;
@@ -135,12 +142,17 @@ body {
     overflow: hidden;
 }
 
+.user-name {
+  color: white;
+}
+
 </style>
 </head>
 <body>
 <div id="top">
   <span>lobby</span>
   <input type="text" id="lobby" size="12" value="main"/>
+  <span id="lobby-info"></span>
 </div>
 <div id="log"></div>
 <form id="form">
