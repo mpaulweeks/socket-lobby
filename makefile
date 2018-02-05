@@ -1,5 +1,8 @@
-run:
-	cd lobby-server && go build && ./lobby-server
+prod:
+	cd lobby-server && go build && ./lobby-server --addr :5110
+
+prod-bg:
+	nohup make prod > /dev/null &
 
 dev:
 	# go get -u github.com/pilu/fresh
