@@ -42,6 +42,17 @@ func (h *Hub) deleteClient(client *Client) {
 	delete(h.clients.getApp(client.app).getLobby(client.lobby), client)
 }
 
+func (h *Hub) broadcastMessage(client *Client, message *Message) {
+	if client.id != message.ClientID {
+		select {
+		case client.send <- message.toJSON():
+		default:
+			close(client.send)
+			h.deleteClient(client)
+		}
+	}
+}
+
 func (h *Hub) run() {
 	for {
 		select {
@@ -54,14 +65,17 @@ func (h *Hub) run() {
 				close(client.send)
 			}
 		case message := <-h.broadcast:
-			for client := range h.clients.getApp(message.App).getLobby(message.Lobby) {
-				if client.id != message.ClientID {
-					select {
-					case client.send <- message.toJSON():
-					default:
-						close(client.send)
-						h.deleteClient(client)
+			lobby := h.clients.getApp(message.App).getLobby(message.Lobby)
+			for client := range lobby {
+				if message.Type == "info" {
+					if client.id == message.ClientID {
+						client.blob = message.Message
 					}
+					lobbyRefresh := newLobbyRefreshMessage(message)
+					h.broadcastMessage(client, lobbyRefresh)
+				}
+				if message.Type == "update" {
+					h.broadcastMessage(client, message)
 				}
 			}
 		}

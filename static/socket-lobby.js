@@ -90,13 +90,22 @@ class SocketLobby {
     const messages = evt.data.split('\n').map(m => JSON.parse(m));
     const updates = [];
     messages.forEach(m => {
-      if (m.type === 'register'){
-        if (self.conn) {
-          self.log("registered:", m.client_id);
-          self.conn.clientId = m.client_id;
-        }
-      } else {
-        updates.push(m);
+      switch (m.type) {
+        case 'register':
+          if (self.conn) {
+            self.log("registered:", m.client_id);
+            self.conn.clientId = m.client_id;
+          }
+          break;
+        case 'update':
+          updates.push(m);
+          break;
+        case 'lobby_refresh':
+          // todo
+          self.log('triggered lobby_refresh');
+          break;
+        default:
+          throw "unexpected message type: " + m.type;
       }
     });
     if (this.state.onUpdates) {
@@ -104,8 +113,18 @@ class SocketLobby {
     }
   }
 
-  send(message) {
-    this.queue.push(message);
+  sendInfo(info) {
+    this.send('info', info);
+  }
+  sendUpdate(message) {
+    this.send('update', message);
+  }
+  send(type, message) {
+    type = type || 'update';
+    this.queue.push({
+      type: type,
+      message: message,
+    });
     this.dequeue();
   }
   dequeue() {
@@ -125,19 +144,20 @@ class SocketLobby {
     const { queue, app, state, conn } = this;
     const self = this;
     const newQueue = [];
-    queue.forEach(message => {
+    queue.forEach(messageData => {
       const payload = JSON.stringify({
+        type: messageData.type,
         app: app,
         lobby: state.lobby,
         client_id: conn.clientId,
-        message: message,
+        message: messageData.message,
       });
       try {
         conn.send(payload);
         self.log('sent:', payload);
       } catch(err) {
         // send failed, try again later
-        newQueue.push(message);
+        newQueue.push(messageData);
         self.log('queued:', payload);
       }
     });

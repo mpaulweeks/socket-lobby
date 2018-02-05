@@ -36,7 +36,14 @@ function chatWindow(){
     item.innerText = data.name + ' - ' + data.message;
     return item;
   }
+  function sendInfo() {
+    const info = {
+      "name": name.value,
+    };
+    SL.sendInfo(JSON.stringify(info));
+  }
 
+  name.addEventListener('change', sendInfo);
   document.getElementById("form").onsubmit = function() {
     if (!lobby.value) {
       return false;
@@ -51,7 +58,7 @@ function chatWindow(){
       name: name.value,
       message: msg.value,
     };
-    SL.send(JSON.stringify(message));
+    SL.sendUpdate(JSON.stringify(message));
     appendLog(createLog('blue', message));
     msg.value = "";
     return false;
@@ -72,6 +79,7 @@ function chatWindow(){
 
   function setupWebsocket() {
     SL.connect(lobby.value, onMessages);
+    sendInfo();
   }
   lobby.addEventListener('change', setupWebsocket, false);
   setupWebsocket();

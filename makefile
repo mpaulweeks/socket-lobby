@@ -1,9 +1,9 @@
 run:
-	cd lobby-server && go build && ./lobby-server --addr localhost:8080
+	cd lobby-server && go build && ./lobby-server
 
 dev:
-	# go get -u github.com/codegangsta/gin
-	cd lobby-server && gin run main.go
+	# go get -u github.com/pilu/fresh
+	cd lobby-server && fresh
 
 lint:
 	go fmt lobby-server/*.go

@@ -61,14 +61,23 @@ func (m *Message) toJSON() []byte {
 
 func newMessage(rawMessage []byte) *Message {
 	trimmed := bytes.TrimSpace(bytes.Replace(rawMessage, newline, space, -1))
-	message := Message{
-		Type: "update",
-	}
+	message := Message{}
 	err := json.Unmarshal(trimmed, &message)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil
 	}
 	fmt.Printf("\n\n json object:::: %+v", message)
+	return &message
+}
+
+func newLobbyRefreshMessage(info *Message) *Message {
+	message := Message{
+		Type:     "lobby_refresh",
+		App:      info.App,
+		Lobby:    info.Lobby,
+		ClientID: info.ClientID,
+		Message:  "{}",
+	}
 	return &message
 }
