@@ -33,13 +33,13 @@ func (lp LobbyPool) getInfo() map[string][]string {
 	return clients
 }
 
-func (lp LobbyPool) getHeadCount() []map[string]string {
+func (lp LobbyPool) getLobbyPopulation() []map[string]string {
 	var result []map[string]string
 	for lobbyID := range lp {
 		info := lp.getLobby(lobbyID).getInfo()
 		newMap := map[string]string{
-			"lobby":       lobbyID,
-			"lobby_count": strconv.Itoa(len(info)),
+			"lobby": lobbyID,
+			"count": strconv.Itoa(len(info)),
 		}
 		result = append(result, newMap)
 	}
@@ -63,17 +63,4 @@ func (ap AppPool) getInfo() map[string]map[string][]string {
 		newMap[appID] = ap.getApp(appID).getInfo()
 	}
 	return newMap
-}
-
-func (ap AppPool) getHeadCount() []map[string]string {
-	var result []map[string]string
-	for appID := range ap {
-		info := ap.getApp(appID).getInfo()
-		newMap := map[string]string{
-			"app":         appID,
-			"lobby_count": strconv.Itoa(len(info)),
-		}
-		result = append(result, newMap)
-	}
-	return result
 }

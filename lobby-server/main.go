@@ -25,7 +25,6 @@ func main() {
 	r.HandleFunc("/chat", s.serveChat)
 	r.HandleFunc("/js/library.js", s.serveLibrary)
 	r.HandleFunc("/api/health", s.serveHealth)
-	r.HandleFunc("/api/apps", s.serveApiInfo)
 	r.HandleFunc("/api/app/{app}/lobbies", s.serveAppInfo)
 	r.HandleFunc("/api/app/{app}/lobby/{lobby}/clients", s.serveLobbyInfo)
 	r.HandleFunc("/ws/app/{app}/lobby/{lobby}", s.serveWebsocket)

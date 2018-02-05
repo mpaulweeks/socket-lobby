@@ -57,14 +57,10 @@ func (s *Server) serveHealth(w http.ResponseWriter, r *http.Request) {
 	s.serveJSON(w, s.hub.clients.getInfo())
 }
 
-func (s *Server) serveApiInfo(w http.ResponseWriter, r *http.Request) {
-	s.serveJSON(w, s.hub.clients.getHeadCount())
-}
-
 func (s *Server) serveAppInfo(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	app := vars["app"]
-	s.serveJSON(w, s.hub.clients.getApp(app).getHeadCount())
+	s.serveJSON(w, s.hub.clients.getApp(app).getLobbyPopulation())
 }
 
 func (s *Server) serveLobbyInfo(w http.ResponseWriter, r *http.Request) {
