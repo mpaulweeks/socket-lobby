@@ -1,5 +1,9 @@
 package main
 
+import (
+	"strconv"
+)
+
 type ClientPool map[*Client]bool
 
 func (cp ClientPool) getInfo() []string {
@@ -29,12 +33,17 @@ func (lp LobbyPool) getInfo() map[string][]string {
 	return clients
 }
 
-func (lp LobbyPool) getHeadCount() map[string]int {
-	clients := make(map[string]int)
+func (lp LobbyPool) getHeadCount() []map[string]string {
+	var result []map[string]string
 	for lobbyID := range lp {
-		clients[lobbyID] = len(lp.getLobby(lobbyID).getInfo())
+		info := lp.getLobby(lobbyID).getInfo()
+		newMap := map[string]string{
+			"lobby":       lobbyID,
+			"lobby_count": strconv.Itoa(len(info)),
+		}
+		result = append(result, newMap)
 	}
-	return clients
+	return result
 }
 
 type AppPool map[string]LobbyPool
@@ -56,10 +65,15 @@ func (ap AppPool) getInfo() map[string]map[string][]string {
 	return newMap
 }
 
-func (ap AppPool) getHeadCount() map[string]int {
-	newMap := make(map[string]int)
+func (ap AppPool) getHeadCount() []map[string]string {
+	var result []map[string]string
 	for appID := range ap {
-		newMap[appID] = len(ap.getApp(appID).getInfo())
+		info := ap.getApp(appID).getInfo()
+		newMap := map[string]string{
+			"app":         appID,
+			"lobby_count": strconv.Itoa(len(info)),
+		}
+		result = append(result, newMap)
 	}
-	return newMap
+	return result
 }

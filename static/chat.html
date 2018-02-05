@@ -8,7 +8,7 @@
 const SL = new SocketLobby(document.location.host, 'chat');
 function lobbyWindow(){
   SL.fetchLobbies().then(data => {
-    document.body.innerHTML = JSON.stringify(data);
+    console.log("fetch lobbies:", data);
   });
 }
 function chatWindow(){
@@ -73,6 +73,7 @@ function chatWindow(){
 }
 window.onload = function () {
   lobbyWindow();
+  chatWindow();
 };
 </script>
 <style type="text/css">
