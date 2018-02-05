@@ -29,7 +29,7 @@ class SocketLobby {
   }
 
   reconnect() {
-    const { lobby, onUpdates } = this.state;
+    const { lobby, onLobbyRefresh, onUpdates } = this.state;
     if (lobby){
       this.log("reconnecting...")
       this.connect(lobby, onLobbyRefresh, onUpdates);
