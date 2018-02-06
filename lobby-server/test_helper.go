@@ -24,17 +24,25 @@ func StrToBytes(in string) []byte {
 }
 
 // NewTestString ...
-func NewTestString() string {
+func NewTestString(prefix string) string {
 	testCounter++
-	return "testString-" + strconv.Itoa(testCounter)
+	return prefix + "#" + strconv.Itoa(testCounter)
 }
 
 func newTestClient() *Client {
 	client := Client{
-		app:   NewTestString(),
-		lobby: NewTestString(),
-		id:    NewTestString(),
-		blob:  NewTestString(),
+		app:   NewTestString("app"),
+		lobby: NewTestString("lobby"),
+		id:    NewTestString("client_id"),
+		blob:  NewTestString("blob"),
 	}
 	return &client
+}
+
+func newTestClientPool() ClientPool {
+	cp := ClientPool{}
+	for i := 0; i < 10; i++ {
+		cp.addClient(newTestClient())
+	}
+	return cp
 }

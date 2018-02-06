@@ -23,11 +23,11 @@ func TestRegisterMessage(t *testing.T) {
 
 func TestMessage(t *testing.T) {
 	rawData := map[string]string{
-		"type":      NewTestString(),
-		"client_id": NewTestString(),
-		"app":       NewTestString(),
-		"lobby":     NewTestString(),
-		"message":   NewTestString(),
+		"type":      NewTestString("type"),
+		"client_id": NewTestString("client_id"),
+		"app":       NewTestString("app"),
+		"lobby":     NewTestString("lobby"),
+		"message":   NewTestString("message"),
 	}
 	rawJSON := StrToBytes(ToJSON(rawData))
 	sut := newMessage(rawJSON)
