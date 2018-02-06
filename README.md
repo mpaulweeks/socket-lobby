@@ -1,6 +1,7 @@
 # socket-lobby
 Generic lobby server using websockets
 
+Built with the [gorilla chat example](https://github.com/gorilla/websocket/tree/master/examples/chat) as a starting point
 
 ## nginx
 
@@ -17,5 +18,8 @@ location / {
 ```
 
 ## todo
+
+- kill old db server
+  - `netstat -tulpn`
 - tests
 - consume info apis in example
