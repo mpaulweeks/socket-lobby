@@ -1,40 +1,8 @@
 package main
 
 import (
-	"encoding/json"
-	"strconv"
 	"testing"
 )
-
-var (
-	testCounter = 0
-)
-
-func ToJson(data interface{}) string {
-	jsonBytes, err := json.Marshal(data)
-	if err != nil {
-		return ""
-	}
-	return string(jsonBytes)
-}
-
-func StrToBytes(in string) []byte {
-	return []byte(in)
-}
-
-func NewTestString() string {
-	testCounter += 1
-	return "testString-" + strconv.Itoa(testCounter)
-}
-
-func newTestClient() *Client {
-	client := Client{
-		app:   NewTestString(),
-		lobby: NewTestString(),
-		id:    NewTestString(),
-	}
-	return &client
-}
 
 func TestRegisterMessage(t *testing.T) {
 	client := newTestClient()
@@ -61,8 +29,8 @@ func TestMessage(t *testing.T) {
 		"lobby":     NewTestString(),
 		"message":   NewTestString(),
 	}
-	rawJson := StrToBytes(ToJson(rawData))
-	sut := newMessage(rawJson)
+	rawJSON := StrToBytes(ToJSON(rawData))
+	sut := newMessage(rawJSON)
 	if rawData["type"] != sut.Type {
 		t.Error("Type incorrectly set")
 	}
