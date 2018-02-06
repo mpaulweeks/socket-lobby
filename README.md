@@ -1,4 +1,5 @@
-# socket-lobby
+# socket-lobby [![CircleCI](https://circleci.com/gh/mpaulweeks/socket-lobby/tree/master.svg?style=svg)](https://circleci.com/gh/mpaulweeks/socket-lobby/tree/master)
+
 Generic lobby server using websockets
 
 Built with the [gorilla chat example](https://github.com/gorilla/websocket/tree/master/examples/chat) as a starting point
