@@ -8,6 +8,9 @@ dev:
 	# go get -u github.com/pilu/fresh
 	cd lobby-server && fresh
 
+test:
+	go test -v ./...
+
 lint:
 	go fmt lobby-server/*.go
 
