@@ -166,3 +166,4 @@ class SocketLobby {
     this.queue = newQueue;
   }
 }
+window.SocketLobby = SocketLobby;
