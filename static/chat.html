@@ -80,7 +80,7 @@ function chatWindow(){
   });
 
   function onUpdate(update) {
-    const data = JSON.parse(update.message);
+    const data = JSON.parse(update);
     appendLog(createLog('black', data));
   }
 

@@ -7,6 +7,13 @@ import (
 	"log"
 )
 
+const (
+	MessageTypeRegister     = "register"
+	MessageTypeUpdate       = "update"
+	MessageTypeLobbyRefresh = "lobby_refresh"
+	MessageTypeInfo         = "info"
+)
+
 var (
 	newline = []byte{'\n'}
 	space   = []byte{' '}
@@ -20,6 +27,7 @@ type RegisterMessage struct {
 	ClientID string `json:"client_id"`
 }
 
+// todo
 func (rm *RegisterMessage) toJSON() []byte {
 	b, err := json.Marshal(rm)
 	if err != nil {
@@ -32,7 +40,7 @@ func (rm *RegisterMessage) toJSON() []byte {
 
 func newRegisterMessage(client *Client) *RegisterMessage {
 	rm := RegisterMessage{
-		Type:     "register",
+		Type:     MessageTypeRegister,
 		App:      client.app,
 		Lobby:    client.lobby,
 		ClientID: client.id,
@@ -49,6 +57,7 @@ type Message struct {
 	Message  string `json:"message"`
 }
 
+// todo
 func (m *Message) toJSON() []byte {
 	b, err := json.Marshal(m)
 	if err != nil {
@@ -64,16 +73,15 @@ func newMessage(rawMessage []byte) *Message {
 	message := Message{}
 	err := json.Unmarshal(trimmed, &message)
 	if err != nil {
-		log.Printf("error: %v", err)
+		log.Printf("error creating newMessage: %v", err)
 		return nil
 	}
-	fmt.Printf("\n\n json object:::: %+v", message)
 	return &message
 }
 
 func newLobbyRefreshMessage(client *Client) *Message {
 	message := Message{
-		Type:     "lobby_refresh",
+		Type:     MessageTypeLobbyRefresh,
 		App:      client.app,
 		Lobby:    client.lobby,
 		ClientID: client.id,

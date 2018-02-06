@@ -4,10 +4,19 @@ class SocketLobby {
     this.baseUrl = baseUrl;
     this.app = app;
     this.logFunc = logFunc || console.log;
+
     this.conn = null;
     this.config = {};
+
     this.queue = [];
     this.dequeueInterval = setInterval(() => this.dequeue(), 100);
+
+    this.MessageType = {
+      register: 'register',
+      info: 'info',
+      update: 'update',
+      lobbyRefresh: 'lobby_refresh',
+    };
   }
   log(...args) {
     this.logFunc(...args);
@@ -93,16 +102,16 @@ class SocketLobby {
     const updates = [];
     messages.forEach(m => {
       switch (m.type) {
-        case 'register':
+        case this.MessageType.register:
           if (self.conn) {
             self.log("registered:", m.client_id);
             self.conn.clientId = m.client_id;
           }
           break;
-        case 'update':
+        case this.MessageType.update:
           updates.push(m);
           break;
-        case 'lobby_refresh':
+        case this.MessageType.lobbyRefresh:
           if (self.config.onLobbyRefresh){
             self.config.onLobbyRefresh();
           }
@@ -113,19 +122,18 @@ class SocketLobby {
     });
     if (this.config.onUpdate) {
       updates.forEach(u => {
-        this.config.onUpdate(u);
+        this.config.onUpdate(u.message);
       });
     }
   }
 
   sendInfo(info) {
-    this.send('info', info);
+    this.send(this.MessageType.info, info);
   }
   sendUpdate(message) {
-    this.send('update', message);
+    this.send(this.MessageType.update, message);
   }
   send(type, message) {
-    type = type || 'update';
     this.queue.push({
       type: type,
       message: message,

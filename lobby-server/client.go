@@ -132,6 +132,7 @@ func (c *Client) writePump() {
 
 // Write ID to client on Register
 func (c *Client) writeRegister() {
+	// todo just go send <- ???
 	w, err := c.conn.NextWriter(websocket.TextMessage)
 	if err != nil {
 		return

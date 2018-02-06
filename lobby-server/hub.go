@@ -72,17 +72,17 @@ func (h *Hub) run() {
 		case message := <-h.broadcast:
 			lobby := h.clients.getApp(message.App).getLobby(message.Lobby)
 			for client := range lobby {
-				if message.Type == "info" {
+				if message.Type == MessageTypeInfo {
 					if client.id == message.ClientID {
 						client.blob = message.Message
 						go h.triggerLobbyRefresh(client)
 					}
 				}
-				if message.Type == "lobby_refresh" {
+				if message.Type == MessageTypeLobbyRefresh {
 					fmt.Println("we got there")
 					h.broadcastMessage(client, message)
 				}
-				if message.Type == "update" {
+				if message.Type == MessageTypeUpdate {
 					if client.id != message.ClientID {
 						h.broadcastMessage(client, message)
 					}
