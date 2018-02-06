@@ -79,15 +79,17 @@ function chatWindow(){
     });
   });
 
-  function onUpdates(updates) {
-    updates.forEach(update => {
-      const data = JSON.parse(update.message);
-      appendLog(createLog('black', data));
-    });
+  function onUpdate(update) {
+    const data = JSON.parse(update.message);
+    appendLog(createLog('black', data));
   }
 
   function setupWebsocket() {
-    SL.connect(lobby.value, onLobbyRefresh, onUpdates);
+    SL.connect({
+      lobby: lobby.value,
+      onLobbyRefresh: onLobbyRefresh,
+      onUpdate: onUpdate,
+    });
   }
   lobby.addEventListener('change', setupWebsocket, false);
   setupWebsocket();

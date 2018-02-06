@@ -5,7 +5,7 @@ class SocketLobby {
     this.app = app;
     this.logFunc = logFunc || console.log;
     this.conn = null;
-    this.state = {};
+    this.config = {};
     this.queue = [];
     this.dequeueInterval = setInterval(() => this.dequeue(), 100);
   }
@@ -29,13 +29,14 @@ class SocketLobby {
   }
 
   reconnect() {
-    const { lobby, onLobbyRefresh, onUpdates } = this.state;
+    const { lobby, onLobbyRefresh, onUpdate } = this.config;
     if (lobby){
       this.log("reconnecting...")
-      this.connect(lobby, onLobbyRefresh, onUpdates);
+      this.connect(lobby, onLobbyRefresh, onUpdate);
     }
   }
-  connect(lobby, onLobbyRefresh, onUpdates) {
+  connect(config) {
+    const { lobby, onLobbyRefresh, onUpdate } = config;
     if (!lobby){
       throw 'invalid lobby';
     }
@@ -47,14 +48,14 @@ class SocketLobby {
     this.close();
 
     // handle existing queue
-    if (lobby !== this.state.lobby){
+    if (lobby !== this.config.lobby){
       // new lobby, clear old queue
       this.queue = [];
     }
-    this.state = {
+    this.config = {
       lobby: lobby,
       onLobbyRefresh: onLobbyRefresh,
-      onUpdates: onUpdates,
+      onUpdate: onUpdate,
     };
 
     // create new conn, set new lobby
@@ -102,16 +103,18 @@ class SocketLobby {
           updates.push(m);
           break;
         case 'lobby_refresh':
-          if (self.state.onLobbyRefresh){
-            self.state.onLobbyRefresh();
+          if (self.config.onLobbyRefresh){
+            self.config.onLobbyRefresh();
           }
           break;
         default:
           throw "unexpected message type: " + m.type;
       }
     });
-    if (this.state.onUpdates) {
-      this.state.onUpdates(updates);
+    if (this.config.onUpdate) {
+      updates.forEach(u => {
+        this.config.onUpdate(u);
+      });
     }
   }
 
@@ -143,14 +146,14 @@ class SocketLobby {
 
     // race condition avoided thanks to JS event loop
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop
-    const { queue, app, state, conn } = this;
+    const { queue, app, config, conn } = this;
     const self = this;
     const newQueue = [];
     queue.forEach(messageData => {
       const payload = JSON.stringify({
         type: messageData.type,
         app: app,
-        lobby: state.lobby,
+        lobby: config.lobby,
         client_id: conn.clientId,
         message: messageData.message,
       });
