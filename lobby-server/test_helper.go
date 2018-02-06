@@ -34,6 +34,7 @@ func newTestClient() *Client {
 		app:   NewTestString(),
 		lobby: NewTestString(),
 		id:    NewTestString(),
+		blob:  NewTestString(),
 	}
 	return &client
 }

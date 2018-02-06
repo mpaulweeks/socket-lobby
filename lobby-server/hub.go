@@ -31,25 +31,12 @@ func newHub() *Hub {
 	}
 }
 
-func (h *Hub) getClient(client *Client) (bool, bool) {
-	result, ok := h.clients.getApp(client.app).getLobby(client.lobby)[client]
-	return result, ok
-}
-
-func (h *Hub) setClient(client *Client) {
-	h.clients.getApp(client.app).getLobby(client.lobby)[client] = true
-}
-
-func (h *Hub) deleteClient(client *Client) {
-	delete(h.clients.getApp(client.app).getLobby(client.lobby), client)
-}
-
 func (h *Hub) broadcastMessage(client *Client, message *Message) {
 	select {
 	case client.send <- message.toJSON():
 	default:
 		close(client.send)
-		h.deleteClient(client)
+		h.clients.removeClient(client)
 	}
 }
 
@@ -61,11 +48,11 @@ func (h *Hub) run() {
 	for {
 		select {
 		case client := <-h.register:
-			h.setClient(client)
+			h.clients.addClient(client)
 			client.writeRegister()
 		case client := <-h.unregister:
-			if _, ok := h.getClient(client); ok {
-				h.deleteClient(client)
+			if ok := h.clients.hasClient(client); ok {
+				h.clients.removeClient(client)
 				close(client.send)
 				go h.triggerLobbyRefresh(client)
 			}
