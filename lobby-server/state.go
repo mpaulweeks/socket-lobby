@@ -63,7 +63,8 @@ func (lp LobbyPool) removeClient(client *Client) {
 	lp.getLobby(client.lobby).removeClient(client)
 }
 func (lp LobbyPool) hasClient(client *Client) bool {
-	return lp.getLobby(client.lobby).hasClient(client)
+	lookup, ok := lp[client.lobby]
+	return ok && lookup.hasClient(client)
 }
 
 func (lp LobbyPool) getLobby(lobby string) ClientPool {
@@ -112,7 +113,8 @@ func (ap AppPool) removeClient(client *Client) {
 	ap.getApp(client.app).getLobby(client.lobby).removeClient(client)
 }
 func (ap AppPool) hasClient(client *Client) bool {
-	return ap.getApp(client.app).getLobby(client.lobby).hasClient(client)
+	lookup, ok := ap[client.app]
+	return ok && lookup.hasClient(client)
 }
 
 func (ap AppPool) getApp(app string) LobbyPool {
