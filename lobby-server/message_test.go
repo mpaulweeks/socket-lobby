@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestRegisterMessage(t *testing.T) {
+func TestNewRegisterMessage(t *testing.T) {
 	client := newTestClient()
 	sut := newRegisterMessage(client)
 	if MessageTypeRegister != sut.Type {
@@ -21,7 +21,7 @@ func TestRegisterMessage(t *testing.T) {
 	}
 }
 
-func TestMessage(t *testing.T) {
+func TestNewMessage(t *testing.T) {
 	rawData := map[string]string{
 		"type":      NewTestString("type"),
 		"client_id": NewTestString("client_id"),
@@ -48,7 +48,7 @@ func TestMessage(t *testing.T) {
 	}
 }
 
-func TestLobbyRefreshMessage(t *testing.T) {
+func TestNewLobbyRefreshMessage(t *testing.T) {
 	client := newTestClient()
 	sut := newLobbyRefreshMessage(client)
 	if MessageTypeLobbyRefresh != sut.Type {
