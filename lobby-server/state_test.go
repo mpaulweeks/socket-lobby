@@ -6,9 +6,13 @@ import (
 )
 
 func TestClientPool(t *testing.T) {
-	details := ClientPool{}.getClientDetails()
-	if len(details) > 0 {
-		t.Error("getClientDetails() should return empty list")
+	emptyDetails := ClientPool{}.getClientDetails()
+	if !reflect.DeepEqual(emptyDetails, make(ClientDetails, 0)) {
+		t.Errorf("getClientDetails() should return empty list, got: %v", emptyDetails)
+	}
+	emptyInfo := ClientPool{}.getInfo()
+	if !reflect.DeepEqual(emptyInfo, make(ClientPoolInfo, 0)) {
+		t.Errorf("getInfo() should return empty list, got: %v", emptyInfo)
 	}
 
 	testClient := newTestClient()
@@ -48,9 +52,13 @@ func TestClientPool(t *testing.T) {
 }
 
 func TestLobbyPool(t *testing.T) {
-	details := LobbyPool{}.getLobbyPopulation()
-	if len(details) > 0 {
-		t.Error("getLobbyPopulation() should return empty list")
+	emptyPopulation := LobbyPool{}.getLobbyPopulation()
+	if !reflect.DeepEqual(emptyPopulation, make(LobbyPopulation, 0)) {
+		t.Errorf("getLobbyPopulation() should return empty list, got: %v", emptyPopulation)
+	}
+	emptyInfo := LobbyPool{}.getInfo()
+	if !reflect.DeepEqual(emptyInfo, make(LobbyPoolInfo, 0)) {
+		t.Errorf("getInfo() should return empty list, got: %v", emptyInfo)
 	}
 
 	testClient := newTestClient()
@@ -92,9 +100,9 @@ func TestLobbyPool(t *testing.T) {
 }
 
 func TestAppPool(t *testing.T) {
-	details := AppPool{}.getInfo()
-	if len(details) > 0 {
-		t.Error("getLobbyPopulation() should return empty list")
+	emptyInfo := AppPool{}.getInfo()
+	if !reflect.DeepEqual(emptyInfo, make(AppPoolInfo, 0)) {
+		t.Errorf("getInfo() should return empty list, got: %v", emptyInfo)
 	}
 
 	testClient := newTestClient()

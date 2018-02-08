@@ -41,7 +41,7 @@ func (cp ClientPool) getClientDetails() ClientDetails {
 	}
 	sort.Sort(ByClientID(sortedClients))
 
-	var result ClientDetails
+	result := make(ClientDetails, 0)
 	for _, client := range sortedClients {
 		newMap := map[string]string{
 			"user": client.id,
@@ -91,7 +91,7 @@ func (lp LobbyPool) getLobbyPopulation() LobbyPopulation {
 	}
 	sort.Strings(sortedLobbyIDs)
 
-	var result LobbyPopulation
+	result := make(LobbyPopulation, 0)
 	for _, lobbyID := range sortedLobbyIDs {
 		info := lp.getLobby(lobbyID).getInfo()
 		newMap := map[string]string{
