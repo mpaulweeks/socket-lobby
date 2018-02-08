@@ -7,11 +7,14 @@
 
 const SL = new SocketLobby(document.location.host, 'chat');
 function chatWindow(){
-  var lobby = document.getElementById("lobby");
+  var lobbyName = "unknown";
+  var lobbyNameElm = document.getElementById("lobby-name");
+  var lobbyInputElm = document.getElementById("lobby-input");
+  var lobbyScreenElm = document.getElementById("modal-container");
+  const lobbyInfoElm = document.getElementById("lobby-info");
   var name = document.getElementById("name");
   var msg = document.getElementById("msg");
   var log = document.getElementById("log");
-  const lobbyInfoElm = document.getElementById("lobby-info");
 
   function appendLog(item) {
     var doScroll = log.scrollTop > log.scrollHeight - log.clientHeight - 1;
@@ -34,7 +37,7 @@ function chatWindow(){
     SL.sendInfo(JSON.stringify(info));
   }
   function onLobbyRefresh() {
-    SL.fetchLobbyUsers(lobby.value).then(lobbyData => {
+    SL.fetchLobbyUsers(lobbyName).then(lobbyData => {
       console.log('fetched lobby:', lobbyData);
       if (!lobbyData){
         return;
@@ -54,7 +57,7 @@ function chatWindow(){
 
   name.addEventListener('change', sendInfo);
   document.getElementById("form").onsubmit = function() {
-    if (!lobby.value) {
+    if (!lobbyName) {
       return false;
     }
     if (!name.value) {
@@ -84,17 +87,22 @@ function chatWindow(){
     appendLog(createLog('black', data));
   }
 
-  function setupWebsocket() {
+  function loadLobby(newLobbyName) {
+    lobbyScreenElm.classList.add('hidden');
+    lobbyName = newLobbyName;
+    lobbyNameElm.innerHTML = lobbyName;
     SL.connect({
-      lobby: lobby.value,
+      lobby: lobbyName,
       onLobbyRefresh: onLobbyRefresh,
       onUpdate: onUpdate,
     });
+    onLobbyRefresh();
+    sendInfo();
   }
-  lobby.addEventListener('change', setupWebsocket, false);
-  setupWebsocket();
-  onLobbyRefresh();
-  sendInfo();
+
+  document.getElementById("lobby-submit").addEventListener('click', () => {
+    loadLobby(lobbyInputElm.value);
+  });
 }
 window.onload = function () {
   chatWindow();
@@ -144,16 +152,38 @@ body {
     overflow: hidden;
 }
 
+#modal-container {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+#lobby-modal {
+  position: absolute;
+  padding: 50px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #FFFFFF;
+}
+#lobby-name {
+  color: lightblue;
+}
 .user-name {
   color: white;
+}
+.hidden {
+  display: none;
 }
 
 </style>
 </head>
 <body>
 <div id="top">
-  <span>lobby</span>
-  <input type="text" id="lobby" size="12" value="main"/>
+  <span>lobby:</span>
+  <span id="lobby-name"></span>
   <span id="lobby-info"></span>
 </div>
 <div id="log"></div>
@@ -165,5 +195,16 @@ body {
     <input type="text" id="msg" size="64"/>
     <button id="spam">SPAM</button>
 </form>
+<div id="modal-container">
+  <div id="lobby-modal">
+    <div>
+      <input type="text" id="lobby-input" size="12" value="main"/>
+      <button id="lobby-submit">go</button>
+    </div>
+    <div>
+      select goes here
+    </div>
+  </div>
+</div>
 </body>
 </html>
