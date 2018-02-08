@@ -10,6 +10,7 @@ function chatWindow(){
   var lobbyName = "unknown";
   var lobbyNameElm = document.getElementById("lobby-name");
   var lobbyInputElm = document.getElementById("lobby-input");
+  var lobbySelectElm = document.getElementById("lobby-select");
   var lobbyScreenElm = document.getElementById("modal-container");
   const lobbyInfoElm = document.getElementById("lobby-info");
   var name = document.getElementById("name");
@@ -81,12 +82,23 @@ function chatWindow(){
       document.getElementById("submit").click();
     });
   });
+  document.getElementById("lobby-submit").addEventListener('click', () => {
+    loadLobby(lobbyInputElm.value);
+  });
+  document.getElementById("lobby-switch").addEventListener('click', () => {
+    lobbyModal();
+  });
+  lobbySelectElm.addEventListener('change', () => {
+    const newLobbyName = lobbySelectElm.value;
+    if (newLobbyName){
+      loadLobby(newLobbyName);
+    }
+  })
 
   function onUpdate(update) {
     const data = JSON.parse(update);
     appendLog(createLog('black', data));
   }
-
   function loadLobby(newLobbyName) {
     lobbyScreenElm.classList.add('hidden');
     lobbyName = newLobbyName;
@@ -99,10 +111,16 @@ function chatWindow(){
     onLobbyRefresh();
     sendInfo();
   }
-
-  document.getElementById("lobby-submit").addEventListener('click', () => {
-    loadLobby(lobbyInputElm.value);
-  });
+  function lobbyModal(){
+    lobbyScreenElm.classList.remove('hidden');
+    SL.fetchLobbies().then(lobbies => {
+      const optionsHTML = lobbies.map(lobby => {
+        return`<option value="${lobby.lobby}">${lobby.lobby} (${lobby.count})</option>`;
+      }).join('');
+      lobbySelectElm.innerHTML = `<option value="">-</option>${optionsHTML}`;
+    })
+  }
+  lobbyModal();
 }
 window.onload = function () {
   chatWindow();
@@ -182,7 +200,7 @@ body {
 </head>
 <body>
 <div id="top">
-  <span>lobby:</span>
+  <button id="lobby-switch">switch lobby?</button>
   <span id="lobby-name"></span>
   <span id="lobby-info"></span>
 </div>
@@ -198,11 +216,16 @@ body {
 <div id="modal-container">
   <div id="lobby-modal">
     <div>
+      create a lobby
+    <div>
       <input type="text" id="lobby-input" size="12" value="main"/>
       <button id="lobby-submit">go</button>
     </div>
     <div>
-      select goes here
+      or join an existing lobby
+    </div>
+    <div>
+      <select id="lobby-select"></select>
     </div>
   </div>
 </div>
