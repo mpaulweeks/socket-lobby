@@ -20,7 +20,9 @@ location / {
 
 ## todo
 
-- kill old db server
-  - `netstat -tulpn`
-- tests
-- consume info apis in example
+- handler tests
+- channel tests?
+- cleanup chat example
+- nail down info apis, document in readme
+- add auto-reload to server
+- minify/clean js library
