@@ -54,7 +54,9 @@ class SocketLobby {
     }
 
     // close existing conn if able
-    this.close();
+    if (this.conn){
+      this.conn.close();
+    }
 
     // handle existing queue
     if (lobby !== this.config.lobby){
@@ -77,22 +79,17 @@ class SocketLobby {
     conn.onclose = function(evt) {
       if (evt.code == 3001) {
         // closed
-        self.conn = null;
+        conn = null;
       } else {
         // connection error
-        self.conn = null;
+        conn = null;
       }
     };
     conn.onerror = function(evt) {
       if (conn.readyState !== 1) {
-        self.close();
+        conn.close();
       }
     };
-  }
-  close() {
-    if (this.conn){
-      this.conn.close();
-    }
   }
   receive(evt) {
     const self = this;
