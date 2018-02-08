@@ -38,10 +38,10 @@ class SocketLobby {
   }
 
   reconnect() {
-    const { lobby, onLobbyRefresh, onUpdate } = this.config;
+    const { lobby } = this.config;
     if (lobby){
       this.log("reconnecting...")
-      this.connect(lobby, onLobbyRefresh, onUpdate);
+      this.connect(this.config);
     }
   }
   connect(config) {
