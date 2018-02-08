@@ -79,10 +79,10 @@ class SocketLobby {
     conn.onclose = function(evt) {
       if (evt.code == 3001) {
         // closed
-        conn = null;
+        conn.close();
       } else {
         // connection error
-        conn = null;
+        conn.close();
       }
     };
     conn.onerror = function(evt) {
