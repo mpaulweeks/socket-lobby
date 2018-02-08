@@ -8,6 +8,9 @@ dev:
 	# go get -u github.com/pilu/fresh
 	cd lobby-server && fresh
 
+pid:
+	netstat -tulpn | grep 'lobby-server'
+
 test:
 	go test -v ./...
 
