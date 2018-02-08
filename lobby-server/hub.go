@@ -51,6 +51,7 @@ func (h *Hub) run() {
 			h.clients.addClient(client)
 			client.writeRegister()
 		case client := <-h.unregister:
+			fmt.Printf("client unregistering: %v\n", client.id)
 			if ok := h.clients.hasClient(client); ok {
 				h.clients.removeClient(client)
 				close(client.send)
@@ -66,7 +67,6 @@ func (h *Hub) run() {
 					}
 				}
 				if message.Type == MessageTypeLobbyRefresh {
-					fmt.Println("we got there")
 					h.broadcastMessage(client, message)
 				}
 				if message.Type == MessageTypeUpdate {

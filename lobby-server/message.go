@@ -64,7 +64,6 @@ func (m *Message) toJSON() []byte {
 		fmt.Println(err)
 		return nil
 	}
-	fmt.Println(string(b))
 	return b
 }
 
