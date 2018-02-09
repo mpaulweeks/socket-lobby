@@ -33,6 +33,7 @@ func main() {
 	router = r
 
 	// if dev
+	// https://stackoverflow.com/a/40987389
 	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type"})
 	originsOk := handlers.AllowedOrigins([]string{"http://localhost:3000"})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
