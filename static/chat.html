@@ -112,6 +112,7 @@ function chatWindow(){
   }
   function lobbyModal(){
     lobbyScreenElm.classList.remove('hidden');
+    SL.disconnect();
     SL.fetchLobbies().then(lobbies => {
       const optionsHTML = lobbies.map(lobby => {
         return`<option value="${lobby.lobby}">${lobby.lobby} (${lobby.count})</option>`;
