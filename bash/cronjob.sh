@@ -2,9 +2,9 @@
 
 oldCommit=`cat lobby-server/tmp/git.log`
 git pull
-git rev-parse HEAD > lobby-server/tmp/git.log
+git log -n 1 --pretty=format:"%H" > lobby-server/tmp/git.log
 newCommit=`cat lobby-server/tmp/git.log`
-if ! [[ $oldCommmit == $newCommit ]]
+if ! [[ $oldCommit == $newCommit ]]
 then
   curl http://localhost:5110/api/git
   sleep 2
