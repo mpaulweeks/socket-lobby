@@ -61,18 +61,18 @@ func newServer(addr string, h *LobbyHandler) *LobbyServer {
 }
 
 func (s *LobbyServer) checkGit(w http.ResponseWriter, r *http.Request) {
-	oldCommit := s.commit
 	newCommit := readGitVersion()
-	if oldCommit != newCommit {
+	if s.commit != newCommit {
 		w.WriteHeader(http.StatusInternalServerError)
 		io.WriteString(w, "new commit detecting, killing process...")
 		go func() {
+			// todo only kill process if POST, update script
 			// todo s.Server.Shutdown(nil)
 			// https://stackoverflow.com/a/42533360/6461842
 			os.Exit(0)
 		}()
 	} else {
 		w.WriteHeader(http.StatusOK)
-		io.WriteString(w, newCommit)
+		io.WriteString(w, s.commit)
 	}
 }
