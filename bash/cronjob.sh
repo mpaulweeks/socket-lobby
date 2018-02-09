@@ -2,7 +2,7 @@
 
 git pull
 git rev-parse HEAD > lobby-server/tmp/git.log
-status=`curl -s -o /dev/null -w "%{http_code}" localhost:5110/api/git`
+status=`curl -s -o /dev/null -w "%{http_code}" -X POST localhost:5110/api/git`
 echo $status
  if ! [[ $status == "200" ]]
  then

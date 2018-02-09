@@ -22,7 +22,7 @@ func readGitVersion() string {
 	if err != nil {
 		return ""
 	}
-	return string(b)
+	return strings.TrimSpace(string(b))
 }
 
 func newServer(addr string, h *LobbyHandler) *LobbyServer {
@@ -50,12 +50,12 @@ func newServer(addr string, h *LobbyHandler) *LobbyServer {
 	r.HandleFunc("/", h.serveRoot).Methods("GET")
 	r.HandleFunc("/chat", h.serveChat).Methods("GET")
 	r.HandleFunc("/js/library.js", h.serveLibrary).Methods("GET")
-	r.HandleFunc("/api/health", h.serveHealth).Methods("GET")
 	r.HandleFunc("/api/app/{app}/lobbies", h.serveAppInfo).Methods("GET")
 	r.HandleFunc("/api/app/{app}/lobby/{lobby}/users", h.serveLobbyInfo).Methods("GET")
 	r.HandleFunc("/ws/app/{app}/lobby/{lobby}", h.serveWebsocket).Methods("GET")
 
-	r.HandleFunc("/api/git", lobbySrv.checkGit).Methods("GET")
+	r.HandleFunc("/api/git", lobbySrv.checkGit).Methods("POST")
+	r.HandleFunc("/api/health", lobbySrv.serveHealth).Methods("GET")
 
 	return &lobbySrv
 }
@@ -66,7 +66,6 @@ func (s *LobbyServer) checkGit(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		io.WriteString(w, "new commit detecting, killing process...")
 		go func() {
-			// todo only kill process if POST, update script
 			// todo s.Server.Shutdown(nil)
 			// https://stackoverflow.com/a/42533360/6461842
 			os.Exit(0)
@@ -75,4 +74,13 @@ func (s *LobbyServer) checkGit(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		io.WriteString(w, s.commit)
 	}
+}
+
+func (s *LobbyServer) serveHealth(w http.ResponseWriter, r *http.Request) {
+	handlerInfo := s.handler.hub.clients.getInfo()
+	healthInfo := map[string]interface{}{
+		"git": s.commit,
+		"hub": handlerInfo,
+	}
+	s.handler.serveJSON(w, healthInfo)
 }

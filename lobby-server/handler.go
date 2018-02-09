@@ -53,10 +53,6 @@ func (h *LobbyHandler) serveRoot(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/api/health", http.StatusFound)
 }
 
-func (h *LobbyHandler) serveHealth(w http.ResponseWriter, r *http.Request) {
-	h.serveJSON(w, h.hub.clients.getInfo())
-}
-
 func (h *LobbyHandler) serveAppInfo(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	app := vars["app"]
