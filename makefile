@@ -3,7 +3,7 @@ dev:
 	cd lobby-server && fresh
 
 pid:
-	netstat -tulpn | grep 'lobby-server'
+	netstat -tulpn
 
 test:
 	go test -v ./...
