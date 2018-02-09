@@ -17,6 +17,11 @@ test:
 lint:
 	go fmt lobby-server/*.go
 
+pull:
+	git pull
+	git rev-parse HEAD > lobby-server/tmp/git.log
+	curl localhost:5110/api/git
+
 install:
 	go get -u github.com/gorilla/mux
 	go get -u github.com/gorilla/websocket

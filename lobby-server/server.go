@@ -3,21 +3,36 @@ package main
 import (
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/mux"
 )
 
 type Server struct {
-	hub *Hub
+	*http.Server
+	commit string
+	hub    *Hub
 }
 
-func newServer() *Server {
+func readGitVersion() string {
+	b, err := ioutil.ReadFile("tmp/git.log")
+	if err != nil {
+		return ""
+	}
+	return string(b)
+}
+
+func newServer(addr string) *Server {
+	srv := &http.Server{Addr: addr}
 	hub := newHub()
 	go hub.run()
 	return &Server{
-		hub: hub,
+		Server: srv,
+		commit: readGitVersion(),
+		hub:    hub,
 	}
 }
 
@@ -29,6 +44,16 @@ func (s *Server) serveJSON(w http.ResponseWriter, info interface{}) {
 	}
 	out := string(jsonBytes)
 	io.WriteString(w, out)
+}
+
+func (s *Server) checkGit(w http.ResponseWriter, r *http.Request) {
+	oldCommit := s.commit
+	newCommit := readGitVersion()
+	if oldCommit != newCommit {
+		os.Exit(0)
+	} else {
+		io.WriteString(w, newCommit)
+	}
 }
 
 func (s *Server) serveChat(w http.ResponseWriter, r *http.Request) {

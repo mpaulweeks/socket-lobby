@@ -18,12 +18,13 @@ var addr = flag.String("addr", "localhost:5110", "http service address")
 func main() {
 	flag.Parse()
 
-	s := newServer()
+	s := newServer(*addr)
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", s.serveRoot).Methods("GET")
 	r.HandleFunc("/chat", s.serveChat).Methods("GET")
 	r.HandleFunc("/js/library.js", s.serveLibrary).Methods("GET")
+	r.HandleFunc("/api/git", s.checkGit).Methods("GET")
 	r.HandleFunc("/api/health", s.serveHealth).Methods("GET")
 	r.HandleFunc("/api/app/{app}/lobbies", s.serveAppInfo).Methods("GET")
 	r.HandleFunc("/api/app/{app}/lobby/{lobby}/users", s.serveLobbyInfo).Methods("GET")
@@ -39,7 +40,8 @@ func main() {
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
 	router = handlers.CORS(originsOk, headersOk, methodsOk)(r)
 
-	err := http.ListenAndServe(*addr, router)
+	s.Handler = router
+	err := s.ListenAndServe()
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
