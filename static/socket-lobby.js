@@ -37,6 +37,11 @@ class SocketLobby {
     return this.fetchApi(`lobby/${lobby}/users`);
   }
 
+  disconnect() {
+    if (this.conn){
+      this.conn.close();
+    }
+  }
   reconnect() {
     const { lobby } = this.config;
     if (lobby){
@@ -91,6 +96,7 @@ class SocketLobby {
       }
     };
   }
+
   receive(evt) {
     const self = this;
     self.log("received:", evt.data);
