@@ -3,8 +3,10 @@
 git pull
 git rev-parse HEAD > lobby-server/tmp/git.log
 status=`curl -s -o /dev/null -w "%{http_code}" localhost:5110/api/git`
-if ! [[ $status == "200" ]]
-then
+echo $status
+ if ! [[ $status == "200" ]]
+ then
+  echo 'restarting...'
   sleep 2
   ./bash/bg_socket.sh
 fi
