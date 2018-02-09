@@ -66,8 +66,13 @@ func (s *LobbyServer) checkGit(w http.ResponseWriter, r *http.Request) {
 	if oldCommit != newCommit {
 		// todo s.Server.Shutdown(nil)
 		// https://stackoverflow.com/a/42533360/6461842
-		os.Exit(0)
+		w.WriteHeader(http.StatusInternalServerError)
+		io.WriteString(w, "new commit detecting, killing process...")
+		go func() {
+			os.Exit(0)
+		}()
 	} else {
+		w.WriteHeader(http.StatusOK)
 		io.WriteString(w, newCommit)
 	}
 }
