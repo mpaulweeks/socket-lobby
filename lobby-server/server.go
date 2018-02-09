@@ -2,9 +2,9 @@ package main
 
 import (
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/gorilla/handlers"
@@ -18,11 +18,14 @@ type LobbyServer struct {
 }
 
 func readGitVersion() string {
-	b, err := ioutil.ReadFile("tmp/git.log")
+	// https://nathanleclaire.com/blog/2014/12/29/shelled-out-commands-in-golang/
+	cmdName := "git"
+	cmdArgs := []string{"rev-parse", "--verify", "HEAD"}
+	cmdOut, err := exec.Command(cmdName, cmdArgs...).Output()
 	if err != nil {
 		return ""
 	}
-	return strings.TrimSpace(string(b))
+	return strings.TrimSpace(string(cmdOut))
 }
 
 func newServer(addr string, h *LobbyHandler) *LobbyServer {

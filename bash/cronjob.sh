@@ -1,7 +1,6 @@
 # * * * * * ec2-user cd /home/ec2-user/socket-lobby && ./bash/cronjob.sh
 
 git pull
-git rev-parse HEAD > lobby-server/tmp/git.log
 status=`curl -s -o /dev/null -w "%{http_code}" -X POST localhost:5110/api/git`
 echo $status
  if ! [[ $status == "200" ]]
