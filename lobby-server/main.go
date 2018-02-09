@@ -6,10 +6,10 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"net/http"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -29,8 +29,16 @@ func main() {
 	r.HandleFunc("/api/app/{app}/lobby/{lobby}/users", s.serveLobbyInfo).Methods("GET")
 	r.HandleFunc("/ws/app/{app}/lobby/{lobby}", s.serveWebsocket).Methods("GET")
 
-	fmt.Println(*addr)
-	err := http.ListenAndServe(*addr, r)
+	var router http.Handler
+	router = r
+
+	// if dev
+	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type"})
+	originsOk := handlers.AllowedOrigins([]string{"http://localhost:3000"})
+	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
+	router = handlers.CORS(originsOk, headersOk, methodsOk)(r)
+
+	err := http.ListenAndServe(*addr, router)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
