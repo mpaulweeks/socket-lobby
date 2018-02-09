@@ -24,5 +24,4 @@ location / {
 - channel tests?
 - cleanup chat example
 - nail down info apis, document in readme
-- add auto-reload to server
 - minify/clean js library

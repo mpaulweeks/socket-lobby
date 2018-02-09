@@ -5,5 +5,6 @@ git rev-parse HEAD > lobby-server/tmp/git.log
 status=`curl -s -o /dev/null -w "%{http_code}" localhost:5110/api/git`
 if ! [[ $status == "200" ]]
 then
+  sleep 2
   make prod-bg
 fi
