@@ -1,20 +1,20 @@
 package main
 
 import (
-	"encoding/json"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
+	"strings"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
-type Server struct {
+type LobbyServer struct {
 	*http.Server
-	commit string
-	hub    *Hub
+	commit  string
+	handler *LobbyHandler
 }
 
 func readGitVersion() string {
@@ -25,79 +25,49 @@ func readGitVersion() string {
 	return string(b)
 }
 
-func newServer(addr string) *Server {
-	srv := &http.Server{Addr: addr}
-	hub := newHub()
-	go hub.run()
-	return &Server{
-		Server: srv,
-		commit: readGitVersion(),
-		hub:    hub,
+func newServer(addr string, h *LobbyHandler) *LobbyServer {
+	r := mux.NewRouter()
+	var router http.Handler = r
+	if strings.Contains(addr, "localhost") {
+		// if dev
+		// https://stackoverflow.com/a/40987389
+		headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type"})
+		originsOk := handlers.AllowedOrigins([]string{"http://localhost:3000"})
+		methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
+		router = handlers.CORS(originsOk, headersOk, methodsOk)(r)
 	}
+
+	httpSrv := http.Server{
+		Addr:    addr,
+		Handler: router,
+	}
+	lobbySrv := LobbyServer{
+		Server:  &httpSrv,
+		commit:  readGitVersion(),
+		handler: h,
+	}
+
+	r.HandleFunc("/", h.serveRoot).Methods("GET")
+	r.HandleFunc("/chat", h.serveChat).Methods("GET")
+	r.HandleFunc("/js/library.js", h.serveLibrary).Methods("GET")
+	r.HandleFunc("/api/health", h.serveHealth).Methods("GET")
+	r.HandleFunc("/api/app/{app}/lobbies", h.serveAppInfo).Methods("GET")
+	r.HandleFunc("/api/app/{app}/lobby/{lobby}/users", h.serveLobbyInfo).Methods("GET")
+	r.HandleFunc("/ws/app/{app}/lobby/{lobby}", h.serveWebsocket).Methods("GET")
+
+	r.HandleFunc("/api/git", lobbySrv.checkGit).Methods("GET")
+
+	return &lobbySrv
 }
 
-func (s *Server) serveJSON(w http.ResponseWriter, info interface{}) {
-	jsonBytes, err := json.Marshal(info)
-	if err != nil {
-		// todo
-		io.WriteString(w, err.Error())
-	}
-	out := string(jsonBytes)
-	io.WriteString(w, out)
-}
-
-func (s *Server) checkGit(w http.ResponseWriter, r *http.Request) {
+func (s *LobbyServer) checkGit(w http.ResponseWriter, r *http.Request) {
 	oldCommit := s.commit
 	newCommit := readGitVersion()
 	if oldCommit != newCommit {
+		// todo s.Server.Shutdown(nil)
+		// https://stackoverflow.com/a/42533360/6461842
 		os.Exit(0)
 	} else {
 		io.WriteString(w, newCommit)
 	}
-}
-
-func (s *Server) serveChat(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.URL)
-	if r.Method != "GET" {
-		http.Error(w, "Method not allowed", 405)
-		return
-	}
-	http.ServeFile(w, r, "../static/chat.html")
-}
-
-func (s *Server) serveLibrary(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.URL)
-	if r.Method != "GET" {
-		http.Error(w, "Method not allowed", 405)
-		return
-	}
-	http.ServeFile(w, r, "../static/socket-lobby.js")
-}
-
-func (s *Server) serveRoot(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/api/health", http.StatusFound)
-}
-
-func (s *Server) serveHealth(w http.ResponseWriter, r *http.Request) {
-	s.serveJSON(w, s.hub.clients.getInfo())
-}
-
-func (s *Server) serveAppInfo(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	app := vars["app"]
-	s.serveJSON(w, s.hub.clients.getApp(app).getLobbyPopulation())
-}
-
-func (s *Server) serveLobbyInfo(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	app := vars["app"]
-	lobby := vars["lobby"]
-	s.serveJSON(w, s.hub.clients.getApp(app).getLobby(lobby).getClientDetails())
-}
-
-func (s *Server) serveWebsocket(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	app := vars["app"]
-	lobby := vars["lobby"]
-	serveWs(s.hub, app, lobby, w, r)
 }
