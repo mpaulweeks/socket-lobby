@@ -17,12 +17,6 @@ test:
 lint:
 	go fmt lobby-server/*.go
 
-pull:
-	git pull
-	git rev-parse HEAD > lobby-server/tmp/git.log
-	curl -s -o /dev/null -w "%{http_code}" localhost:5110/api/git
-	make prod-bg
-
 install:
 	go get -u github.com/gorilla/mux
 	go get -u github.com/gorilla/websocket
