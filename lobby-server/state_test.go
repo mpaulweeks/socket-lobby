@@ -132,3 +132,35 @@ func TestAppPool(t *testing.T) {
 		t.Errorf("getInfo()\nexpected %v\ngot %v", expectedInfo, actualInfo)
 	}
 }
+
+func TestRemoveClientFromClientPool(t *testing.T){
+  testClient := newTestClient()
+  cp := ClientPool{}
+  cp.addClient(testClient)
+	if !cp.hasClient(testClient) {
+		t.Error("expected true")
+	}
+	cp.removeClient(testClient)
+	if cp.hasClient(testClient) {
+	  t.Error("expected false")
+	}
+}
+
+func TestRemoveClientFromLobbyPool(t *testing.T){
+  testClient := newTestClient()
+  lp := LobbyPool{}
+  lp.addClient(testClient)
+	if !lp.hasClient(testClient) {
+		t.Error("expected true")
+	}
+	if len(lp.getLobby(testClient.lobby)) != 1 {
+	  t.Error("expected lobby with 1 client")
+	}
+	lp.removeClient(testClient)
+	if lp.hasClient(testClient) {
+	  t.Error("expected false")
+	}
+	if len(lp.getLobby(testClient.lobby)) != 0 {
+	  t.Error("expected lobby with 0 clients")
+	}
+}
