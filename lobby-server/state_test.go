@@ -78,9 +78,9 @@ func TestLobbyPool(t *testing.T) {
 		cp.addClient(c)
 		expectedInfo[c.lobby] = cp.getInfo()
 
-		expectedDetails = append(expectedDetails, map[string]string{
+		expectedDetails = append(expectedDetails, map[string]interface{}{
 			"lobby": c.lobby,
-			"count": "1",
+			"count": 1,
 		})
 	}
 	if !sut.hasClient(testClient) {
@@ -134,17 +134,64 @@ func TestAppPool(t *testing.T) {
 }
 
 func helpTestClientCrud(t *testing.T, pool HasClient) {
-	testClient := newTestClient()
-	pool.addClient(testClient)
-	if !pool.hasClient(testClient) {
-		t.Error("expected true")
+	tc1 := newTestClient()
+	tc2 := newTestClient()
+
+	pool.addClient(tc1)
+	if !pool.hasClient(tc1) {
+		t.Error("expected hasClient(tc1) == true")
 	}
-	// todo assert len == 1
-	pool.removeClient(testClient)
-	if pool.hasClient(testClient) {
-		t.Error("expected false")
+	if pool.hasClient(tc2) {
+		t.Error("expected hasClient(tc2) == false")
 	}
-	// todo assert len == 0
+	if pool.length() != 1 {
+		t.Error("expected length == 1")
+	}
+
+	pool.addClient(tc2)
+	if !pool.hasClient(tc1) {
+		t.Error("expected hasClient(tc1) == true")
+	}
+	if !pool.hasClient(tc2) {
+		t.Error("expected hasClient(tc2) == true")
+	}
+	if pool.length() != 2 {
+		t.Error("expected length == 2")
+	}
+
+	pool.removeClient(tc1)
+	if pool.hasClient(tc1) {
+		t.Error("expected hasClient(tc1) == false")
+	}
+	if !pool.hasClient(tc2) {
+		t.Error("expected hasClient(tc2) == true")
+	}
+	if pool.length() != 1 {
+		t.Error("expected length == 1")
+	}
+
+	// remove again to check idempotent
+	pool.removeClient(tc1)
+	if pool.hasClient(tc1) {
+		t.Error("expected hasClient(tc1) == false")
+	}
+	if !pool.hasClient(tc2) {
+		t.Error("expected hasClient(tc2) == true")
+	}
+	if pool.length() != 1 {
+		t.Error("expected length == 1")
+	}
+
+	pool.removeClient(tc2)
+	if pool.hasClient(tc1) {
+		t.Error("expected hasClient(tc1) == false")
+	}
+	if pool.hasClient(tc2) {
+		t.Error("expected hasClient(tc2) == false")
+	}
+	if pool.length() != 0 {
+		t.Error("expected length == 0")
+	}
 }
 
 func TestRemoveClient(t *testing.T) {

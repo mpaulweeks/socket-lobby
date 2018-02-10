@@ -2,13 +2,13 @@ package main
 
 import (
 	"sort"
-	"strconv"
 )
 
 type HasClient interface {
 	addClient(*Client)
 	removeClient(*Client)
 	hasClient(*Client) bool
+	length() int
 }
 
 type ClientPool map[*Client]bool
@@ -21,6 +21,9 @@ func (a ByClientID) Len() int           { return len(a) }
 func (a ByClientID) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByClientID) Less(i, j int) bool { return a[i].id < a[j].id }
 
+func (cp ClientPool) length() int {
+	return len(cp)
+}
 func (cp ClientPool) addClient(client *Client) {
 	cp[client] = true
 }
@@ -60,8 +63,11 @@ func (cp ClientPool) getClientDetails() ClientDetails {
 
 type LobbyPool map[string]ClientPool
 type LobbyPoolInfo map[string]ClientPoolInfo
-type LobbyPopulation []map[string]string
+type LobbyPopulation []map[string]interface{}
 
+func (lp LobbyPool) length() int {
+	return len(lp)
+}
 func (lp LobbyPool) addClient(client *Client) {
 	cp := lp.getLobby(client.lobby)
 	if cp == nil {
@@ -74,7 +80,7 @@ func (lp LobbyPool) removeClient(client *Client) {
 	clientPool := lp.getLobby(client.lobby)
 	if clientPool != nil {
 		clientPool.removeClient(client)
-		if len(clientPool) == 0 {
+		if clientPool.length() == 0 {
 			delete(lp, client.lobby)
 		}
 	}
@@ -105,10 +111,10 @@ func (lp LobbyPool) getLobbyPopulation() LobbyPopulation {
 
 	result := make(LobbyPopulation, 0)
 	for _, lobbyID := range sortedLobbyIDs {
-		info := lp.getLobby(lobbyID).getInfo()
-		newMap := map[string]string{
+		lobby := lp.getLobby(lobbyID)
+		newMap := map[string]interface{}{
 			"lobby": lobbyID,
-			"count": strconv.Itoa(len(info)),
+			"count": lobby.length(),
 		}
 		result = append(result, newMap)
 	}
@@ -118,6 +124,9 @@ func (lp LobbyPool) getLobbyPopulation() LobbyPopulation {
 type AppPool map[string]LobbyPool
 type AppPoolInfo map[string]LobbyPoolInfo
 
+func (ap AppPool) length() int {
+	return len(ap)
+}
 func (ap AppPool) addClient(client *Client) {
 	lp := ap.getApp(client.app)
 	if lp == nil {
@@ -130,7 +139,7 @@ func (ap AppPool) removeClient(client *Client) {
 	lobbyPool := ap.getApp(client.app)
 	if lobbyPool != nil {
 		lobbyPool.removeClient(client)
-		if len(lobbyPool) == 0 {
+		if lobbyPool.length() == 0 {
 			delete(ap, client.app)
 		}
 	}
