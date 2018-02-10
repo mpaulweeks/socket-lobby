@@ -63,7 +63,7 @@ func (lp LobbyPool) removeClient(client *Client) {
 	clientPool := lp.getLobby(client.lobby)
 	clientPool.removeClient(client)
 	if len(clientPool) == 0 {
-	  delete(lp, client.lobby)
+		delete(lp, client.lobby)
 	}
 }
 func (lp LobbyPool) hasClient(client *Client) bool {
@@ -117,7 +117,7 @@ func (ap AppPool) removeClient(client *Client) {
 	lobbyPool := ap.getApp(client.app)
 	lobbyPool.removeClient(client)
 	if len(lobbyPool) == 0 {
-	  delete(ap, client.app)
+		delete(ap, client.app)
 	}
 }
 func (ap AppPool) hasClient(client *Client) bool {
