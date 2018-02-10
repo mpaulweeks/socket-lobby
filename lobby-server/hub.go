@@ -58,20 +58,25 @@ func (h *Hub) run() {
 				go h.triggerLobbyRefresh(client)
 			}
 		case message := <-h.broadcast:
-			lobby := h.clients.getApp(message.App).getLobby(message.Lobby)
-			for client := range lobby {
-				if message.Type == MessageTypeInfo {
-					if client.id == message.ClientID {
-						client.blob = message.Message
-						go h.triggerLobbyRefresh(client)
-					}
-				}
-				if message.Type == MessageTypeLobbyRefresh {
-					h.broadcastMessage(client, message)
-				}
-				if message.Type == MessageTypeUpdate {
-					if client.id != message.ClientID {
-						h.broadcastMessage(client, message)
+			app := h.clients.getApp(message.App)
+			if app != nil {
+				lobby := app.getLobby(message.Lobby)
+				if lobby != nil {
+					for client := range lobby {
+						if message.Type == MessageTypeInfo {
+							if client.id == message.ClientID {
+								client.blob = message.Message
+								go h.triggerLobbyRefresh(client)
+							}
+						}
+						if message.Type == MessageTypeLobbyRefresh {
+							h.broadcastMessage(client, message)
+						}
+						if message.Type == MessageTypeUpdate {
+							if client.id != message.ClientID {
+								h.broadcastMessage(client, message)
+							}
+						}
 					}
 				}
 			}

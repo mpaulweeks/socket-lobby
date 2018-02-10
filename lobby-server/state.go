@@ -5,6 +5,12 @@ import (
 	"strconv"
 )
 
+type HasClient interface {
+	addClient(*Client)
+	removeClient(*Client)
+	hasClient(*Client) bool
+}
+
 type ClientPool map[*Client]bool
 type ClientPoolInfo map[string]string
 type ClientDetails []map[string]string
@@ -57,27 +63,29 @@ type LobbyPoolInfo map[string]ClientPoolInfo
 type LobbyPopulation []map[string]string
 
 func (lp LobbyPool) addClient(client *Client) {
-	lp.getLobby(client.lobby).addClient(client)
+	cp := lp.getLobby(client.lobby)
+	if cp == nil {
+		cp = make(ClientPool)
+	}
+	cp.addClient(client)
+	lp[client.lobby] = cp
 }
 func (lp LobbyPool) removeClient(client *Client) {
 	clientPool := lp.getLobby(client.lobby)
-	clientPool.removeClient(client)
-	if len(clientPool) == 0 {
-		delete(lp, client.lobby)
+	if clientPool != nil {
+		clientPool.removeClient(client)
+		if len(clientPool) == 0 {
+			delete(lp, client.lobby)
+		}
 	}
 }
 func (lp LobbyPool) hasClient(client *Client) bool {
-	lookup, ok := lp[client.lobby]
-	return ok && lookup.hasClient(client)
+	cp := lp[client.lobby]
+	return cp != nil && cp.hasClient(client)
 }
 
 func (lp LobbyPool) getLobby(lobby string) ClientPool {
-	lookup := lp[lobby]
-	if lookup == nil {
-		lookup = make(ClientPool)
-		lp[lobby] = lookup
-	}
-	return lookup
+	return lp[lobby]
 }
 
 func (lp LobbyPool) getInfo() LobbyPoolInfo {
@@ -111,27 +119,29 @@ type AppPool map[string]LobbyPool
 type AppPoolInfo map[string]LobbyPoolInfo
 
 func (ap AppPool) addClient(client *Client) {
-	ap.getApp(client.app).getLobby(client.lobby).addClient(client)
+	lp := ap.getApp(client.app)
+	if lp == nil {
+		lp = make(LobbyPool)
+	}
+	lp.addClient(client)
+	ap[client.app] = lp
 }
 func (ap AppPool) removeClient(client *Client) {
 	lobbyPool := ap.getApp(client.app)
-	lobbyPool.removeClient(client)
-	if len(lobbyPool) == 0 {
-		delete(ap, client.app)
+	if lobbyPool != nil {
+		lobbyPool.removeClient(client)
+		if len(lobbyPool) == 0 {
+			delete(ap, client.app)
+		}
 	}
 }
 func (ap AppPool) hasClient(client *Client) bool {
-	lookup, ok := ap[client.app]
-	return ok && lookup.hasClient(client)
+	lp := ap.getApp(client.app)
+	return lp != nil && lp.hasClient(client)
 }
 
 func (ap AppPool) getApp(app string) LobbyPool {
-	lookup := ap[app]
-	if lookup == nil {
-		lookup = make(LobbyPool)
-		ap[app] = lookup
-	}
-	return lookup
+	return ap[app]
 }
 
 func (ap AppPool) getInfo() AppPoolInfo {

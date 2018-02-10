@@ -6,11 +6,11 @@ import (
 )
 
 func TestClientPool(t *testing.T) {
-	emptyDetails := ClientPool{}.getClientDetails()
+	emptyDetails := make(ClientPool).getClientDetails()
 	if !reflect.DeepEqual(emptyDetails, make(ClientDetails, 0)) {
 		t.Errorf("getClientDetails() should return empty list, got: %v", emptyDetails)
 	}
-	emptyInfo := ClientPool{}.getInfo()
+	emptyInfo := make(ClientPool).getInfo()
 	if !reflect.DeepEqual(emptyInfo, make(ClientPoolInfo, 0)) {
 		t.Errorf("getInfo() should return empty list, got: %v", emptyInfo)
 	}
@@ -22,7 +22,7 @@ func TestClientPool(t *testing.T) {
 		newTestClient(),
 		newTestClient(),
 	}
-	sut := ClientPool{}
+	sut := make(ClientPool)
 	expectedInfo := make(ClientPoolInfo)
 	var expectedDetails ClientDetails
 	for _, c := range clients {
@@ -52,11 +52,11 @@ func TestClientPool(t *testing.T) {
 }
 
 func TestLobbyPool(t *testing.T) {
-	emptyPopulation := LobbyPool{}.getLobbyPopulation()
+	emptyPopulation := make(LobbyPool).getLobbyPopulation()
 	if !reflect.DeepEqual(emptyPopulation, make(LobbyPopulation, 0)) {
 		t.Errorf("getLobbyPopulation() should return empty list, got: %v", emptyPopulation)
 	}
-	emptyInfo := LobbyPool{}.getInfo()
+	emptyInfo := make(LobbyPool).getInfo()
 	if !reflect.DeepEqual(emptyInfo, make(LobbyPoolInfo, 0)) {
 		t.Errorf("getInfo() should return empty list, got: %v", emptyInfo)
 	}
@@ -68,13 +68,13 @@ func TestLobbyPool(t *testing.T) {
 		newTestClient(),
 		newTestClient(),
 	}
-	sut := LobbyPool{}
+	sut := make(LobbyPool)
 	expectedInfo := make(LobbyPoolInfo)
 	var expectedDetails LobbyPopulation
 	for _, c := range clients {
 		sut.addClient(c)
 
-		cp := ClientPool{}
+		cp := make(ClientPool)
 		cp.addClient(c)
 		expectedInfo[c.lobby] = cp.getInfo()
 
@@ -100,7 +100,7 @@ func TestLobbyPool(t *testing.T) {
 }
 
 func TestAppPool(t *testing.T) {
-	emptyInfo := AppPool{}.getInfo()
+	emptyInfo := make(AppPool).getInfo()
 	if !reflect.DeepEqual(emptyInfo, make(AppPoolInfo, 0)) {
 		t.Errorf("getInfo() should return empty list, got: %v", emptyInfo)
 	}
@@ -112,12 +112,12 @@ func TestAppPool(t *testing.T) {
 		newTestClient(),
 		newTestClient(),
 	}
-	sut := AppPool{}
+	sut := make(AppPool)
 	expectedInfo := make(AppPoolInfo)
 	for _, c := range clients {
 		sut.addClient(c)
 
-		lp := LobbyPool{}
+		lp := make(LobbyPool)
 		lp.addClient(c)
 		expectedInfo[c.app] = lp.getInfo()
 	}
@@ -133,34 +133,22 @@ func TestAppPool(t *testing.T) {
 	}
 }
 
-func TestRemoveClientFromClientPool(t *testing.T) {
+func helpTestClientCrud(t *testing.T, pool HasClient) {
 	testClient := newTestClient()
-	cp := ClientPool{}
-	cp.addClient(testClient)
-	if !cp.hasClient(testClient) {
+	pool.addClient(testClient)
+	if !pool.hasClient(testClient) {
 		t.Error("expected true")
 	}
-	cp.removeClient(testClient)
-	if cp.hasClient(testClient) {
+	// todo assert len == 1
+	pool.removeClient(testClient)
+	if pool.hasClient(testClient) {
 		t.Error("expected false")
 	}
+	// todo assert len == 0
 }
 
-func TestRemoveClientFromLobbyPool(t *testing.T) {
-	testClient := newTestClient()
-	lp := LobbyPool{}
-	lp.addClient(testClient)
-	if !lp.hasClient(testClient) {
-		t.Error("expected true")
-	}
-	if len(lp.getLobby(testClient.lobby)) != 1 {
-		t.Error("expected lobby with 1 client")
-	}
-	lp.removeClient(testClient)
-	if lp.hasClient(testClient) {
-		t.Error("expected false")
-	}
-	if len(lp.getLobby(testClient.lobby)) != 0 {
-		t.Error("expected lobby with 0 clients")
-	}
+func TestRemoveClient(t *testing.T) {
+	helpTestClientCrud(t, make(ClientPool))
+	helpTestClientCrud(t, make(LobbyPool))
+	helpTestClientCrud(t, make(AppPool))
 }
