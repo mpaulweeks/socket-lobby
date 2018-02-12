@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -32,21 +31,15 @@ func (h *LobbyHandler) serveJSON(w http.ResponseWriter, info interface{}) {
 }
 
 func (h *LobbyHandler) serveChat(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.URL)
-	if r.Method != "GET" {
-		http.Error(w, "Method not allowed", 405)
-		return
-	}
 	http.ServeFile(w, r, "../static/chat.html")
 }
 
 func (h *LobbyHandler) serveLibrary(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.URL)
-	if r.Method != "GET" {
-		http.Error(w, "Method not allowed", 405)
-		return
-	}
-	http.ServeFile(w, r, "../static/socket-lobby.js")
+	vars := mux.Vars(r)
+	version := vars["version"]
+	// todo use fmt
+	filePath := "../static/socket-lobby.v" + version + ".js"
+	http.ServeFile(w, r, filePath)
 }
 
 func (h *LobbyHandler) serveRoot(w http.ResponseWriter, r *http.Request) {

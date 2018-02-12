@@ -1,7 +1,12 @@
 
 class SocketLobby {
-  constructor(baseUrl, app, logFunc) {
-    this.baseUrl = baseUrl;
+  constructor(app, baseUrl, logFunc){
+     const defaultUrl = (
+       document.location.host.indexOf('localhost') >= 0 ?
+       'localhost:5110' :
+       'socket-lobby.mpaulweeks.com'
+     );
+    this.baseUrl = baseUrl || defaultUrl;
     this.app = app;
     this.logFunc = logFunc || console.log;
 
@@ -24,7 +29,7 @@ class SocketLobby {
 
   fetchApi(path) {
     return (
-      fetch(`http://${this.baseUrl}/api/app/${this.app}/${path}`)
+      fetch(`http://${this.baseUrl}/v1/api/app/${this.app}/${path}`)
       .then(resp => {
          return resp.json();
       })
@@ -75,7 +80,7 @@ class SocketLobby {
     };
 
     // create new conn, set new lobby
-    const conn = new WebSocket(`ws://${this.baseUrl}/ws/app/${this.app}/lobby/${lobby}`);
+    const conn = new WebSocket(`ws://${this.baseUrl}/v1/ws/app/${this.app}/lobby/${lobby}`);
     this.conn = conn;
     const self = this;
     conn.onmessage = function (evt) {

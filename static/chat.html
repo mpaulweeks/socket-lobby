@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
 <title>Chat Example</title>
-<script src="/js/library.js"></script>
+<script src="/v1/js/library.js"></script>
 <script type="text/javascript">
 
-const SL = new SocketLobby(document.location.host, 'chat');
+const SL = new SocketLobby('chat');
 function chatWindow(){
   var lobbyName = "unknown";
   var lobbyNameElm = document.getElementById("lobby-name");
