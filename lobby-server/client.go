@@ -50,7 +50,7 @@ type Client struct {
 	app   string
 	lobby string
 	id    string
-	blob  string
+	data  string
 }
 
 func generateClientID() string {
@@ -156,7 +156,7 @@ func serveWs(hub *Hub, app, lobby string, w http.ResponseWriter, r *http.Request
 		app:   app,
 		lobby: lobby,
 		id:    generateClientID(),
-		blob:  "{}",
+		data:  "{}",
 		hub:   hub,
 		conn:  conn,
 		send:  make(chan []byte, 256),

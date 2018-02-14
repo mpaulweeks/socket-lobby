@@ -65,7 +65,7 @@ func (h *Hub) run() {
 					for client := range lobby {
 						if message.Type == MessageTypeInfo {
 							if client.id == message.ClientID {
-								client.blob = message.Message
+								client.data = message.Message
 								go h.triggerLobbyRefresh(client)
 							}
 						}

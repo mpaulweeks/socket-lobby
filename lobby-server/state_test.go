@@ -28,11 +28,11 @@ func TestClientPool(t *testing.T) {
 	for _, c := range clients {
 		sut.addClient(c)
 
-		expectedInfo[c.id] = c.blob
+		expectedInfo[c.id] = c.data
 
 		expectedDetails = append(expectedDetails, map[string]string{
 			"user": c.id,
-			"blob": c.blob,
+			"data": c.data,
 		})
 	}
 	if !sut.hasClient(testClient) {
@@ -79,8 +79,8 @@ func TestLobbyPool(t *testing.T) {
 		expectedInfo[c.lobby] = cp.getInfo()
 
 		expectedDetails = append(expectedDetails, map[string]interface{}{
-			"lobby": c.lobby,
-			"count": 1,
+			"name":       c.lobby,
+			"population": 1,
 		})
 	}
 	if !sut.hasClient(testClient) {

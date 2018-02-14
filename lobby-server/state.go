@@ -38,7 +38,7 @@ func (cp ClientPool) hasClient(client *Client) bool {
 func (cp ClientPool) getInfo() ClientPoolInfo {
 	clients := make(ClientPoolInfo)
 	for client := range cp {
-		clients[client.id] = client.blob
+		clients[client.id] = client.data
 	}
 	return clients
 }
@@ -54,7 +54,7 @@ func (cp ClientPool) getClientDetails() ClientDetails {
 	for _, client := range sortedClients {
 		newMap := map[string]string{
 			"user": client.id,
-			"blob": client.blob,
+			"data": client.data,
 		}
 		result = append(result, newMap)
 	}
@@ -113,8 +113,8 @@ func (lp LobbyPool) getLobbyPopulation() LobbyPopulation {
 	for _, lobbyID := range sortedLobbyIDs {
 		lobby := lp.getLobby(lobbyID)
 		newMap := map[string]interface{}{
-			"lobby": lobbyID,
-			"count": lobby.length(),
+			"name":       lobbyID,
+			"population": lobby.length(),
 		}
 		result = append(result, newMap)
 	}
