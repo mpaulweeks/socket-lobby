@@ -52,10 +52,10 @@ func newServer(addr string, h *LobbyHandler) *LobbyServer {
 
 	r.HandleFunc("/", h.serveRoot).Methods("GET")
 	r.HandleFunc("/chat", h.serveChat).Methods("GET")
-	r.HandleFunc("/v{version}/js/library.js", h.serveLibrary).Methods("GET")
-	r.HandleFunc("/v{version}/api/app/{app}/lobbies", h.serveAppInfo).Methods("GET")
-	r.HandleFunc("/v{version}/api/app/{app}/lobby/{lobby}/users", h.serveLobbyInfo).Methods("GET")
-	r.HandleFunc("/v{version}/ws/app/{app}/lobby/{lobby}", h.serveWebsocket).Methods("GET")
+	r.HandleFunc("/js/v{version}/library.js", h.serveLibrary).Methods("GET")
+	r.HandleFunc("/api/v{version}/app/{app}/lobbies", h.serveAppInfo).Methods("GET")
+	r.HandleFunc("/api/v{version}/app/{app}/lobby/{lobby}/users", h.serveLobbyInfo).Methods("GET")
+	r.HandleFunc("/ws/v{version}/app/{app}/lobby/{lobby}", h.serveWebsocket).Methods("GET")
 
 	r.HandleFunc("/api/git", lobbySrv.checkGit).Methods("POST")
 	r.HandleFunc("/api/health", lobbySrv.serveHealth).Methods("GET")

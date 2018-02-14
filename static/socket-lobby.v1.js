@@ -29,7 +29,7 @@ class SocketLobby {
 
   fetchApi(path) {
     return (
-      fetch(`http://${this.baseUrl}/v1/api/app/${this.app}/${path}`)
+      fetch(`http://${this.baseUrl}/api/v1/app/${this.app}/${path}`)
       .then(resp => {
          return resp.json();
       })
@@ -80,7 +80,7 @@ class SocketLobby {
     };
 
     // create new conn, set new lobby
-    const conn = new WebSocket(`ws://${this.baseUrl}/v1/ws/app/${this.app}/lobby/${lobby}`);
+    const conn = new WebSocket(`ws://${this.baseUrl}/ws/v1/app/${this.app}/lobby/${lobby}`);
     this.conn = conn;
     const self = this;
     conn.onmessage = function (evt) {

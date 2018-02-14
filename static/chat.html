@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <title>Chat Example</title>
-<script src="/v1/js/library.js"></script>
+<script src="/js/v1/library.js"></script>
 <script type="text/javascript">
 
 const SL = new SocketLobby('chat');
@@ -45,7 +45,7 @@ function chatWindow(){
       }
       let lobbyInfoHTML = '';
       lobbyData.forEach(userData => {
-        const userInfo = JSON.parse(userData.blob);
+        const userInfo = JSON.parse(userData.data);
         if (userInfo.name){
           lobbyInfoHTML += `
             <span class="user-name">${userInfo.name}</span>
@@ -115,7 +115,7 @@ function chatWindow(){
     SL.disconnect();
     SL.fetchLobbies().then(lobbies => {
       const optionsHTML = lobbies.map(lobby => {
-        return`<option value="${lobby.lobby}">${lobby.lobby} (${lobby.count})</option>`;
+        return`<option value="${lobby.name}">${lobby.name} (${lobby.population})</option>`;
       }).join('');
       lobbySelectElm.innerHTML = `<option value="">-</option>${optionsHTML}`;
     })
