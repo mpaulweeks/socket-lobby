@@ -132,17 +132,8 @@ func (c *Client) writePump() {
 
 // Write ID to client on Register
 func (c *Client) writeRegister() {
-	// todo just go send <- ???
-	w, err := c.conn.NextWriter(websocket.TextMessage)
-	if err != nil {
-		return
-	}
 	message := newRegisterMessage(c)
-	w.Write(message.toJSON())
-
-	if err := w.Close(); err != nil {
-		return
-	}
+	c.send <- message.toJSON()
 }
 
 // serveWs handles websocket requests from the peer.
