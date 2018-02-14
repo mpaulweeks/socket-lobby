@@ -23,5 +23,4 @@ location / {
 - handler tests
 - channel tests?
 - cleanup chat example
-- nail down info apis, document in readme
 - minify/clean js library

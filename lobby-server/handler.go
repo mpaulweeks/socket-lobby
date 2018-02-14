@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -23,7 +24,7 @@ func newHandler() *LobbyHandler {
 func (h *LobbyHandler) serveJSON(w http.ResponseWriter, info interface{}) {
 	jsonBytes, err := json.Marshal(info)
 	if err != nil {
-		// todo
+		w.WriteHeader(http.StatusInternalServerError)
 		io.WriteString(w, err.Error())
 	}
 	out := string(jsonBytes)
@@ -37,8 +38,7 @@ func (h *LobbyHandler) serveChat(w http.ResponseWriter, r *http.Request) {
 func (h *LobbyHandler) serveLibrary(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	version := vars["version"]
-	// todo use fmt
-	filePath := "../static/socket-lobby.v" + version + ".js"
+	filePath := fmt.Sprintf("../static/socket-lobby.v%v.js", version)
 	http.ServeFile(w, r, filePath)
 }
 

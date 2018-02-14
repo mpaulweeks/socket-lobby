@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -32,8 +33,7 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		// todo whitelist, not everything
-		return true
+		return strings.HasPrefix(r.Host, "localhost") || strings.HasSuffix(r.Host, "mpaulweeks.com")
 	},
 }
 
@@ -133,7 +133,11 @@ func (c *Client) writePump() {
 // Write ID to client on Register
 func (c *Client) writeRegister() {
 	message := newRegisterMessage(c)
-	c.send <- message.toJSON()
+	json, err := toJSON(message)
+	if err != nil {
+		return
+	}
+	c.send <- json
 }
 
 // serveWs handles websocket requests from the peer.

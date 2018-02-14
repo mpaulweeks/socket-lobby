@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"log"
 )
 
@@ -19,23 +18,20 @@ var (
 	space   = []byte{' '}
 )
 
+func toJSON(data interface{}) ([]byte, error) {
+	b, err := json.Marshal(data)
+	if err != nil {
+		return nil, err
+	}
+	return b, nil
+}
+
 // RegisterMessage represents intial contact
 type RegisterMessage struct {
 	Type     string `json:"type"`
 	App      string `json:"app"`
 	Lobby    string `json:"lobby"`
 	ClientID string `json:"client_id"`
-}
-
-// todo
-func (rm *RegisterMessage) toJSON() []byte {
-	b, err := json.Marshal(rm)
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
-	fmt.Println(string(b))
-	return b
 }
 
 func newRegisterMessage(client *Client) *RegisterMessage {
@@ -55,16 +51,6 @@ type Message struct {
 	App      string `json:"app"`
 	Lobby    string `json:"lobby"`
 	Message  string `json:"message"`
-}
-
-// todo
-func (m *Message) toJSON() []byte {
-	b, err := json.Marshal(m)
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
-	return b
 }
 
 func newMessage(rawMessage []byte) *Message {

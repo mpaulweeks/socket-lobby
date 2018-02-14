@@ -32,8 +32,12 @@ func newHub() *Hub {
 }
 
 func (h *Hub) broadcastMessage(client *Client, message *Message) {
+	json, err := toJSON(message)
+	if err != nil {
+		return
+	}
 	select {
-	case client.send <- message.toJSON():
+	case client.send <- json:
 	default:
 		close(client.send)
 		h.clients.removeClient(client)
