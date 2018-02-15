@@ -50,6 +50,18 @@ func TestClientPool(t *testing.T) {
 	if !reflect.DeepEqual(expectedDetails, actualDetails) {
 		t.Errorf("getClientDetails()\nexpected %v\n got %v", expectedDetails, actualDetails)
 	}
+	expectedSummary := &ClientPoolSummary{
+		settings: &ClientPoolSettings{
+			lobby:    sut.lobby,
+			joinable: sut.joinable,
+			maxSize:  sut.maxSize,
+		},
+		users: expectedDetails,
+	}
+	actualSummary := sut.getSummary()
+	if !reflect.DeepEqual(expectedSummary, actualSummary) {
+		t.Errorf("getSummary()\nexpected %v\n got %v", expectedSummary, actualSummary)
+	}
 }
 
 func TestLobbyPool(t *testing.T) {

@@ -28,6 +28,15 @@ type ClientPool struct {
 }
 type ClientPoolInfo map[string]string
 type ClientDetails []map[string]string
+type ClientPoolSettings struct {
+	lobby    string `json:"name"`
+	joinable bool   `json:"joinable"`
+	maxSize  *int   `json:"max_size"`
+}
+type ClientPoolSummary struct {
+	settings *ClientPoolSettings `json:"settings"`
+	users    ClientDetails       `json:"users"`
+}
 
 type ByClientID []*Client
 
@@ -74,6 +83,32 @@ func (cp *ClientPool) getInfo() ClientPoolInfo {
 		clients[client.id] = client.data
 	}
 	return clients
+}
+
+func (cp *ClientPool) getSummary() *ClientPoolSummary {
+	var sortedClients []*Client
+	for client := range cp.clients {
+		sortedClients = append(sortedClients, client)
+	}
+	sort.Sort(ByClientID(sortedClients))
+
+	users := make(ClientDetails, 0)
+	for _, client := range sortedClients {
+		newMap := map[string]string{
+			"user": client.id,
+			"data": client.data,
+		}
+		users = append(users, newMap)
+	}
+
+	return &ClientPoolSummary{
+		settings: &ClientPoolSettings{
+			lobby:    cp.lobby,
+			joinable: cp.joinable,
+			maxSize:  cp.maxSize,
+		},
+		users: users,
+	}
 }
 
 func (cp *ClientPool) getClientDetails() ClientDetails {
