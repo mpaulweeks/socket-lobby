@@ -66,7 +66,7 @@ func (h *Hub) run() {
 			if app != nil {
 				lobby := app.getLobby(message.Lobby)
 				if lobby != nil {
-					for client := range lobby {
+					for client := range lobby.clients {
 						if message.Type == MessageTypeInfo {
 							if client.id == message.ClientID {
 								client.data = message.Message

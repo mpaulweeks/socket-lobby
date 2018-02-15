@@ -11,7 +11,11 @@ type HasClient interface {
 	length() int
 }
 
-type ClientPool map[*Client]bool
+type ClientLookup map[*Client]bool
+type ClientPool struct {
+	clients ClientLookup
+	maxSize *int
+}
 type ClientPoolInfo map[string]string
 type ClientDetails []map[string]string
 
@@ -21,31 +25,37 @@ func (a ByClientID) Len() int           { return len(a) }
 func (a ByClientID) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByClientID) Less(i, j int) bool { return a[i].id < a[j].id }
 
-func (cp ClientPool) length() int {
-	return len(cp)
+func newClientPool() *ClientPool {
+	return &ClientPool{
+		clients: make(ClientLookup),
+		maxSize: nil,
+	}
 }
-func (cp ClientPool) addClient(client *Client) {
-	cp[client] = true
+func (cp *ClientPool) length() int {
+	return len(cp.clients)
 }
-func (cp ClientPool) removeClient(client *Client) {
-	delete(cp, client)
+func (cp *ClientPool) addClient(client *Client) {
+	cp.clients[client] = true
 }
-func (cp ClientPool) hasClient(client *Client) bool {
-	_, ok := cp[client]
+func (cp *ClientPool) removeClient(client *Client) {
+	delete(cp.clients, client)
+}
+func (cp *ClientPool) hasClient(client *Client) bool {
+	_, ok := cp.clients[client]
 	return ok
 }
 
-func (cp ClientPool) getInfo() ClientPoolInfo {
+func (cp *ClientPool) getInfo() ClientPoolInfo {
 	clients := make(ClientPoolInfo)
-	for client := range cp {
+	for client := range cp.clients {
 		clients[client.id] = client.data
 	}
 	return clients
 }
 
-func (cp ClientPool) getClientDetails() ClientDetails {
+func (cp *ClientPool) getClientDetails() ClientDetails {
 	var sortedClients []*Client
-	for client := range cp {
+	for client := range cp.clients {
 		sortedClients = append(sortedClients, client)
 	}
 	sort.Sort(ByClientID(sortedClients))
@@ -61,7 +71,7 @@ func (cp ClientPool) getClientDetails() ClientDetails {
 	return result
 }
 
-type LobbyPool map[string]ClientPool
+type LobbyPool map[string]*ClientPool
 type LobbyPoolInfo map[string]ClientPoolInfo
 type LobbyPopulation []map[string]interface{}
 
@@ -71,7 +81,7 @@ func (lp LobbyPool) length() int {
 func (lp LobbyPool) addClient(client *Client) {
 	cp := lp.getLobby(client.lobby)
 	if cp == nil {
-		cp = make(ClientPool)
+		cp = newClientPool()
 	}
 	cp.addClient(client)
 	lp[client.lobby] = cp
@@ -90,7 +100,7 @@ func (lp LobbyPool) hasClient(client *Client) bool {
 	return cp != nil && cp.hasClient(client)
 }
 
-func (lp LobbyPool) getLobby(lobby string) ClientPool {
+func (lp LobbyPool) getLobby(lobby string) *ClientPool {
 	return lp[lobby]
 }
 

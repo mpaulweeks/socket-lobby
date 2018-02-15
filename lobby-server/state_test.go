@@ -6,11 +6,11 @@ import (
 )
 
 func TestClientPool(t *testing.T) {
-	emptyDetails := make(ClientPool).getClientDetails()
+	emptyDetails := newClientPool().getClientDetails()
 	if !reflect.DeepEqual(emptyDetails, make(ClientDetails, 0)) {
 		t.Errorf("getClientDetails() should return empty list, got: %v", emptyDetails)
 	}
-	emptyInfo := make(ClientPool).getInfo()
+	emptyInfo := newClientPool().getInfo()
 	if !reflect.DeepEqual(emptyInfo, make(ClientPoolInfo, 0)) {
 		t.Errorf("getInfo() should return empty list, got: %v", emptyInfo)
 	}
@@ -22,7 +22,7 @@ func TestClientPool(t *testing.T) {
 		newTestClient(),
 		newTestClient(),
 	}
-	sut := make(ClientPool)
+	sut := newClientPool()
 	expectedInfo := make(ClientPoolInfo)
 	var expectedDetails ClientDetails
 	for _, c := range clients {
@@ -74,7 +74,7 @@ func TestLobbyPool(t *testing.T) {
 	for _, c := range clients {
 		sut.addClient(c)
 
-		cp := make(ClientPool)
+		cp := newClientPool()
 		cp.addClient(c)
 		expectedInfo[c.lobby] = cp.getInfo()
 
@@ -195,7 +195,7 @@ func helpTestClientCrud(t *testing.T, pool HasClient) {
 }
 
 func TestRemoveClient(t *testing.T) {
-	helpTestClientCrud(t, make(ClientPool))
+	helpTestClientCrud(t, newClientPool())
 	helpTestClientCrud(t, make(LobbyPool))
 	helpTestClientCrud(t, make(AppPool))
 }
