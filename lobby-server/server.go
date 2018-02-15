@@ -55,6 +55,7 @@ func newServer(addr string, h *LobbyHandler) *LobbyServer {
 	r.HandleFunc("/js/v{version}/library.js", h.serveLibrary).Methods("GET")
 	r.HandleFunc("/api/v{version}/app/{app}/lobbies", h.serveAppInfo).Methods("GET")
 	r.HandleFunc("/api/v{version}/app/{app}/lobby/{lobby}/users", h.serveLobbyInfo).Methods("GET")
+	r.HandleFunc("/api/v{version}/app/{app}/lobby/{lobby}/summary", h.serveLobbySummary).Methods("GET")
 	r.HandleFunc("/ws/v{version}/app/{app}/lobby/{lobby}", h.serveWebsocket).Methods("GET")
 
 	r.HandleFunc("/api/git", lobbySrv.checkGit).Methods("POST")

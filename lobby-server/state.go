@@ -29,13 +29,13 @@ type ClientPool struct {
 type ClientPoolInfo map[string]string
 type ClientDetails []map[string]string
 type ClientPoolSettings struct {
-	lobby    string `json:"name"`
-	joinable bool   `json:"joinable"`
-	maxSize  *int   `json:"max_size"`
+	Lobby    string `json:"name"`
+	Joinable bool   `json:"joinable"`
+	MaxSize  *int   `json:"max_size"`
 }
 type ClientPoolSummary struct {
-	settings *ClientPoolSettings `json:"settings"`
-	users    ClientDetails       `json:"users"`
+	Settings *ClientPoolSettings `json:"settings"`
+	Users    ClientDetails       `json:"users"`
 }
 
 type ByClientID []*Client
@@ -102,12 +102,12 @@ func (cp *ClientPool) getSummary() *ClientPoolSummary {
 	}
 
 	return &ClientPoolSummary{
-		settings: &ClientPoolSettings{
-			lobby:    cp.lobby,
-			joinable: cp.joinable,
-			maxSize:  cp.maxSize,
+		Settings: &ClientPoolSettings{
+			Lobby:    cp.lobby,
+			Joinable: cp.joinable,
+			MaxSize:  cp.maxSize,
 		},
-		users: users,
+		Users: users,
 	}
 }
 

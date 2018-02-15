@@ -51,12 +51,12 @@ func TestClientPool(t *testing.T) {
 		t.Errorf("getClientDetails()\nexpected %v\n got %v", expectedDetails, actualDetails)
 	}
 	expectedSummary := &ClientPoolSummary{
-		settings: &ClientPoolSettings{
-			lobby:    sut.lobby,
-			joinable: sut.joinable,
-			maxSize:  sut.maxSize,
+		Settings: &ClientPoolSettings{
+			Lobby:    sut.lobby,
+			Joinable: sut.joinable,
+			MaxSize:  sut.maxSize,
 		},
-		users: expectedDetails,
+		Users: expectedDetails,
 	}
 	actualSummary := sut.getSummary()
 	if !reflect.DeepEqual(expectedSummary, actualSummary) {

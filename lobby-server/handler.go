@@ -59,6 +59,13 @@ func (h *LobbyHandler) serveLobbyInfo(w http.ResponseWriter, r *http.Request) {
 	h.serveJSON(w, h.hub.clients.getApp(app).getLobby(lobby).getClientDetails())
 }
 
+func (h *LobbyHandler) serveLobbySummary(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	app := vars["app"]
+	lobby := vars["lobby"]
+	h.serveJSON(w, h.hub.clients.getApp(app).getLobby(lobby).getSummary())
+}
+
 func (h *LobbyHandler) serveWebsocket(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	app := vars["app"]
