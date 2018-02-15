@@ -30,9 +30,13 @@ func NewTestString(prefix string) string {
 }
 
 func newTestClient() *Client {
+	return newTestClientWithLobby(NewTestString("lobby"))
+}
+
+func newTestClientWithLobby(lobby string) *Client {
 	client := Client{
 		app:   NewTestString("app"),
-		lobby: NewTestString("lobby"),
+		lobby: lobby,
 		id:    NewTestString("client_id"),
 		data:  NewTestString("data"),
 	}

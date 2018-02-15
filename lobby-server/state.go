@@ -1,11 +1,18 @@
 package main
 
 import (
+	"errors"
 	"sort"
 )
 
+var (
+	errClientPoolInvalidLobby = errors.New("client.lobby didn't match existing lobby")
+	errClientPoolNotJoinable  = errors.New("lobby.joinable == false")
+	errClientPoolFull         = errors.New("already at capacity")
+)
+
 type HasClient interface {
-	addClient(*Client)
+	addClient(*Client) error
 	removeClient(*Client)
 	hasClient(*Client) bool
 	length() int
@@ -13,8 +20,11 @@ type HasClient interface {
 
 type ClientLookup map[*Client]bool
 type ClientPool struct {
-	clients ClientLookup
-	maxSize *int
+	clients  ClientLookup
+	lobby    string
+	joinable bool
+	maxSize  *int
+	data     string
 }
 type ClientPoolInfo map[string]string
 type ClientDetails []map[string]string
@@ -25,17 +35,30 @@ func (a ByClientID) Len() int           { return len(a) }
 func (a ByClientID) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByClientID) Less(i, j int) bool { return a[i].id < a[j].id }
 
-func newClientPool() *ClientPool {
+func newClientPool(lobby string) *ClientPool {
 	return &ClientPool{
-		clients: make(ClientLookup),
-		maxSize: nil,
+		clients:  make(ClientLookup),
+		lobby:    lobby,
+		joinable: true,
+		maxSize:  nil,
+		data:     "{}",
 	}
 }
 func (cp *ClientPool) length() int {
 	return len(cp.clients)
 }
-func (cp *ClientPool) addClient(client *Client) {
+func (cp *ClientPool) addClient(client *Client) error {
+	if cp.lobby != client.lobby {
+		return errClientPoolInvalidLobby
+	}
+	if !cp.joinable {
+		return errClientPoolNotJoinable
+	}
+	if cp.maxSize != nil && *cp.maxSize <= cp.length() {
+		return errClientPoolFull
+	}
 	cp.clients[client] = true
+	return nil
 }
 func (cp *ClientPool) removeClient(client *Client) {
 	delete(cp.clients, client)
@@ -78,13 +101,16 @@ type LobbyPopulation []map[string]interface{}
 func (lp LobbyPool) length() int {
 	return len(lp)
 }
-func (lp LobbyPool) addClient(client *Client) {
+func (lp LobbyPool) addClient(client *Client) error {
 	cp := lp.getLobby(client.lobby)
 	if cp == nil {
-		cp = newClientPool()
+		cp = newClientPool(client.lobby)
 	}
-	cp.addClient(client)
-	lp[client.lobby] = cp
+	err := cp.addClient(client)
+	if err == nil {
+		lp[client.lobby] = cp
+	}
+	return err
 }
 func (lp LobbyPool) removeClient(client *Client) {
 	clientPool := lp.getLobby(client.lobby)
@@ -137,13 +163,16 @@ type AppPoolInfo map[string]LobbyPoolInfo
 func (ap AppPool) length() int {
 	return len(ap)
 }
-func (ap AppPool) addClient(client *Client) {
+func (ap AppPool) addClient(client *Client) error {
 	lp := ap.getApp(client.app)
 	if lp == nil {
 		lp = make(LobbyPool)
 	}
-	lp.addClient(client)
-	ap[client.app] = lp
+	err := lp.addClient(client)
+	if err == nil {
+		ap[client.app] = lp
+	}
+	return err
 }
 func (ap AppPool) removeClient(client *Client) {
 	lobbyPool := ap.getApp(client.app)

@@ -6,23 +6,24 @@ import (
 )
 
 func TestClientPool(t *testing.T) {
-	emptyDetails := newClientPool().getClientDetails()
+	lobby := NewTestString("lobby")
+	emptyDetails := newClientPool(lobby).getClientDetails()
 	if !reflect.DeepEqual(emptyDetails, make(ClientDetails, 0)) {
 		t.Errorf("getClientDetails() should return empty list, got: %v", emptyDetails)
 	}
-	emptyInfo := newClientPool().getInfo()
+	emptyInfo := newClientPool(lobby).getInfo()
 	if !reflect.DeepEqual(emptyInfo, make(ClientPoolInfo, 0)) {
 		t.Errorf("getInfo() should return empty list, got: %v", emptyInfo)
 	}
 
-	testClient := newTestClient()
+	testClient := newTestClientWithLobby(lobby)
 	clients := []*Client{
 		testClient,
-		newTestClient(),
-		newTestClient(),
-		newTestClient(),
+		newTestClientWithLobby(lobby),
+		newTestClientWithLobby(lobby),
+		newTestClientWithLobby(lobby),
 	}
-	sut := newClientPool()
+	sut := newClientPool(lobby)
 	expectedInfo := make(ClientPoolInfo)
 	var expectedDetails ClientDetails
 	for _, c := range clients {
@@ -74,7 +75,7 @@ func TestLobbyPool(t *testing.T) {
 	for _, c := range clients {
 		sut.addClient(c)
 
-		cp := newClientPool()
+		cp := newClientPool(c.lobby)
 		cp.addClient(c)
 		expectedInfo[c.lobby] = cp.getInfo()
 
@@ -133,10 +134,7 @@ func TestAppPool(t *testing.T) {
 	}
 }
 
-func helpTestClientCrud(t *testing.T, pool HasClient) {
-	tc1 := newTestClient()
-	tc2 := newTestClient()
-
+func helpTestClientCrud(t *testing.T, tc1, tc2 *Client, pool HasClient) {
 	pool.addClient(tc1)
 	if !pool.hasClient(tc1) {
 		t.Error("expected hasClient(tc1) == true")
@@ -194,8 +192,21 @@ func helpTestClientCrud(t *testing.T, pool HasClient) {
 	}
 }
 
-func TestRemoveClient(t *testing.T) {
-	helpTestClientCrud(t, newClientPool())
-	helpTestClientCrud(t, make(LobbyPool))
-	helpTestClientCrud(t, make(AppPool))
+func TestRemoveClientFromClientPool(t *testing.T) {
+	lobby := NewTestString("lobby")
+	tc1 := newTestClientWithLobby(lobby)
+	tc2 := newTestClientWithLobby(lobby)
+	helpTestClientCrud(t, tc1, tc2, newClientPool(lobby))
+}
+
+func TestRemoveClientFromLobbyPool(t *testing.T) {
+	tc1 := newTestClient()
+	tc2 := newTestClient()
+	helpTestClientCrud(t, tc1, tc2, make(LobbyPool))
+}
+
+func TestRemoveClientFromAppPool(t *testing.T) {
+	tc1 := newTestClient()
+	tc2 := newTestClient()
+	helpTestClientCrud(t, tc1, tc2, make(AppPool))
 }
