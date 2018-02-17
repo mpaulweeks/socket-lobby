@@ -66,7 +66,7 @@ func (cp *ClientPool) renew() {
 }
 func (cp *ClientPool) expired() bool {
 	now := cp.clock.NowTicks()
-	return cp.lastUsed < now-60
+	return cp.lastUsed <= now-60
 }
 func (cp *ClientPool) addClient(client *Client) error {
 	if cp.lobby != client.lobby {
@@ -84,7 +84,6 @@ func (cp *ClientPool) addClient(client *Client) error {
 }
 func (cp *ClientPool) removeClient(client *Client) {
 	delete(cp.clients, client)
-	cp.renew()
 }
 func (cp *ClientPool) hasClient(client *Client) bool {
 	_, ok := cp.clients[client]

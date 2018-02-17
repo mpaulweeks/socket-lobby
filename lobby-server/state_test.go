@@ -76,7 +76,7 @@ func TestClientExpire(t *testing.T) {
 	if sut.expired() {
 		t.Error("client should be fine before 60 seconds")
 	}
-	mClock.nowTicks += 60
+	mClock.nowTicks = 60
 	if !sut.expired() {
 		t.Error("client should expire after 60 seconds")
 	}
@@ -168,7 +168,7 @@ func TestAppPool(t *testing.T) {
 	}
 }
 
-func helpTestClientCrud(t *testing.T, tc1, tc2 *Client, pool HasClient) {
+func helpTestClientCrud(t *testing.T, tc1, tc2 *Client, mClock *MockClock, pool HasClient) {
 	pool.addClient(tc1)
 	if !pool.hasClient(tc1) {
 		t.Error("expected hasClient(tc1) == true")
@@ -191,6 +191,7 @@ func helpTestClientCrud(t *testing.T, tc1, tc2 *Client, pool HasClient) {
 		t.Error("expected length == 2")
 	}
 
+	mClock.nowTicks += 60
 	pool.removeClient(tc1)
 	if pool.hasClient(tc1) {
 		t.Error("expected hasClient(tc1) == false")
@@ -203,6 +204,7 @@ func helpTestClientCrud(t *testing.T, tc1, tc2 *Client, pool HasClient) {
 	}
 
 	// remove again to check idempotent
+	mClock.nowTicks += 60
 	pool.removeClient(tc1)
 	if pool.hasClient(tc1) {
 		t.Error("expected hasClient(tc1) == false")
@@ -214,6 +216,7 @@ func helpTestClientCrud(t *testing.T, tc1, tc2 *Client, pool HasClient) {
 		t.Error("expected length == 1")
 	}
 
+	mClock.nowTicks += 60
 	pool.removeClient(tc2)
 	if pool.hasClient(tc1) {
 		t.Error("expected hasClient(tc1) == false")
@@ -231,19 +234,19 @@ func TestRemoveClientFromClientPool(t *testing.T) {
 	tc1 := newTestClientWithLobby(lobby)
 	tc2 := newTestClientWithLobby(lobby)
 	mClock := newMockClockFromTicks(0)
-	helpTestClientCrud(t, tc1, tc2, newClientPool(mClock, lobby))
+	helpTestClientCrud(t, tc1, tc2, mClock, newClientPool(mClock, lobby))
 }
 
 func TestRemoveClientFromLobbyPool(t *testing.T) {
 	tc1 := newTestClient()
 	tc2 := newTestClient()
 	mClock := newMockClockFromTicks(0)
-	helpTestClientCrud(t, tc1, tc2, newLobbyPool(mClock, tc1.lobby))
+	helpTestClientCrud(t, tc1, tc2, mClock, newLobbyPool(mClock, tc1.lobby))
 }
 
 func TestRemoveClientFromAppPool(t *testing.T) {
 	tc1 := newTestClient()
 	tc2 := newTestClient()
 	mClock := newMockClockFromTicks(0)
-	helpTestClientCrud(t, tc1, tc2, newAppPool(mClock))
+	helpTestClientCrud(t, tc1, tc2, mClock, newAppPool(mClock))
 }
