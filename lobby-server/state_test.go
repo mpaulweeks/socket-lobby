@@ -64,6 +64,15 @@ func TestClientPool(t *testing.T) {
 	}
 }
 
+func TestClientExpire(t *testing.T) {
+	mClock := newMockClockFromTicks(20)
+	testClient := newTestClient()
+	sut := newClientPool(testClient.lobby)
+	sut.clock = mClock
+	sut.addClient(testClient)
+	// todo
+}
+
 func TestLobbyPool(t *testing.T) {
 	emptyPopulation := make(LobbyPool).getLobbyPopulation()
 	if !reflect.DeepEqual(emptyPopulation, make(LobbyPopulation, 0)) {

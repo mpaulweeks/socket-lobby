@@ -20,10 +20,12 @@ type HasClient interface {
 
 type ClientLookup map[*Client]bool
 type ClientPool struct {
+	clock    Clock
 	clients  ClientLookup
 	lobby    string
 	joinable bool
 	maxSize  *int
+	lastUsed int
 	data     string
 }
 type ClientPoolInfo map[string]string
@@ -45,16 +47,25 @@ func (a ByClientID) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByClientID) Less(i, j int) bool { return a[i].id < a[j].id }
 
 func newClientPool(lobby string) *ClientPool {
-	return &ClientPool{
+	cp := ClientPool{
+		clock:    RealClock,
 		clients:  make(ClientLookup),
 		lobby:    lobby,
 		joinable: true,
 		maxSize:  nil,
 		data:     "{}",
 	}
+	cp.renew()
+	return &cp
 }
 func (cp *ClientPool) length() int {
 	return len(cp.clients)
+}
+func (cp *ClientPool) renew() {
+	cp.lastUsed = cp.clock.NowTicks()
+}
+func (cp *ClientPool) expired() bool {
+	return cp.lastUsed < 5 // todo
 }
 func (cp *ClientPool) addClient(client *Client) error {
 	if cp.lobby != client.lobby {
@@ -67,13 +78,16 @@ func (cp *ClientPool) addClient(client *Client) error {
 		return errClientPoolFull
 	}
 	cp.clients[client] = true
+	cp.renew()
 	return nil
 }
 func (cp *ClientPool) removeClient(client *Client) {
 	delete(cp.clients, client)
+	cp.renew()
 }
 func (cp *ClientPool) hasClient(client *Client) bool {
 	_, ok := cp.clients[client]
+	cp.renew()
 	return ok
 }
 
@@ -132,6 +146,7 @@ func (cp *ClientPool) getClientDetails() ClientDetails {
 type LobbyPool map[string]*ClientPool
 type LobbyPoolInfo map[string]ClientPoolInfo
 type LobbyPopulation []map[string]interface{}
+type LobbyPoolSummary []*ClientPoolSummary
 
 func (lp LobbyPool) length() int {
 	return len(lp)
@@ -151,7 +166,7 @@ func (lp LobbyPool) removeClient(client *Client) {
 	clientPool := lp.getLobby(client.lobby)
 	if clientPool != nil {
 		clientPool.removeClient(client)
-		if clientPool.length() == 0 {
+		if clientPool.length() == 0 && clientPool.expired() {
 			delete(lp, client.lobby)
 		}
 	}
@@ -188,6 +203,22 @@ func (lp LobbyPool) getLobbyPopulation() LobbyPopulation {
 			"population": lobby.length(),
 		}
 		result = append(result, newMap)
+	}
+	return result
+}
+
+func (lp LobbyPool) getSummary() LobbyPoolSummary {
+	var sortedLobbyIDs []string
+	for lobbyID := range lp {
+		sortedLobbyIDs = append(sortedLobbyIDs, lobbyID)
+	}
+	sort.Strings(sortedLobbyIDs)
+
+	result := make(LobbyPoolSummary, 0)
+	for _, lobbyID := range sortedLobbyIDs {
+		lobby := lp.getLobby(lobbyID)
+		cpSummary := lobby.getSummary()
+		result = append(result, cpSummary)
 	}
 	return result
 }

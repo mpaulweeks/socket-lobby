@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"strconv"
+	"time"
 )
 
 var (
@@ -49,4 +50,23 @@ func newTestClientPool() ClientPool {
 		cp.addClient(newTestClient())
 	}
 	return cp
+}
+
+type MockClock struct {
+	now      time.Time
+	nowTicks int
+}
+
+func (m *MockClock) Now() time.Time {
+	return m.now
+}
+func (m *MockClock) NowTicks() int {
+	return m.nowTicks
+}
+
+func newMockClockFromTicks(nowTicks int) Clock {
+	return &MockClock{
+		now:      time.Now(),
+		nowTicks: nowTicks,
+	}
 }
