@@ -6,13 +6,13 @@ import (
 )
 
 func TestClientPool(t *testing.T) {
-	clock := RealClock
+	mClock := RealClock
 	lobby := NewTestString("lobby")
-	emptyDetails := newClientPool(clock, lobby).getClientDetails()
+	emptyDetails := newClientPool(mClock, lobby).getClientDetails()
 	if !reflect.DeepEqual(emptyDetails, make(ClientDetails, 0)) {
 		t.Errorf("getClientDetails() should return empty list, got: %v", emptyDetails)
 	}
-	emptyInfo := newClientPool(clock, lobby).getInfo()
+	emptyInfo := newClientPool(mClock, lobby).getInfo()
 	if !reflect.DeepEqual(emptyInfo, make(ClientPoolInfo, 0)) {
 		t.Errorf("getInfo() should return empty list, got: %v", emptyInfo)
 	}
@@ -24,7 +24,7 @@ func TestClientPool(t *testing.T) {
 		newTestClientWithLobby(lobby),
 		newTestClientWithLobby(lobby),
 	}
-	sut := newClientPool(clock, lobby)
+	sut := newClientPool(mClock, lobby)
 	expectedInfo := make(ClientPoolInfo)
 	var expectedDetails ClientDetails
 	for _, c := range clients {
@@ -84,13 +84,13 @@ func TestClientExpire(t *testing.T) {
 }
 
 func TestLobbyPool(t *testing.T) {
-	clock := RealClock
+	mClock := RealClock
 	lobby := NewTestString("lobby")
-	emptyPopulation := newLobbyPool(clock, lobby).getLobbyPopulation()
+	emptyPopulation := newLobbyPool(mClock, lobby).getLobbyPopulation()
 	if !reflect.DeepEqual(emptyPopulation, make(LobbyPopulation, 0)) {
 		t.Errorf("getLobbyPopulation() should return empty list, got: %v", emptyPopulation)
 	}
-	emptyInfo := newLobbyPool(clock, lobby).getInfo()
+	emptyInfo := newLobbyPool(mClock, lobby).getInfo()
 	if !reflect.DeepEqual(emptyInfo, make(LobbyPoolInfo, 0)) {
 		t.Errorf("getInfo() should return empty list, got: %v", emptyInfo)
 	}
@@ -102,13 +102,13 @@ func TestLobbyPool(t *testing.T) {
 		newTestClient(),
 		newTestClient(),
 	}
-	sut := newLobbyPool(clock, lobby)
+	sut := newLobbyPool(mClock, lobby)
 	expectedInfo := make(LobbyPoolInfo)
 	var expectedDetails LobbyPopulation
 	for _, c := range clients {
 		sut.addClient(c)
 
-		cp := newClientPool(clock, c.lobby)
+		cp := newClientPool(mClock, c.lobby)
 		cp.addClient(c)
 		expectedInfo[c.lobby] = cp.getInfo()
 
@@ -134,8 +134,8 @@ func TestLobbyPool(t *testing.T) {
 }
 
 func TestAppPool(t *testing.T) {
-	clock := RealClock
-	emptyInfo := newAppPool(clock).getInfo()
+	mClock := RealClock
+	emptyInfo := newAppPool(mClock).getInfo()
 	if !reflect.DeepEqual(emptyInfo, make(AppPoolInfo, 0)) {
 		t.Errorf("getInfo() should return empty list, got: %v", emptyInfo)
 	}
@@ -147,12 +147,12 @@ func TestAppPool(t *testing.T) {
 		newTestClient(),
 		newTestClient(),
 	}
-	sut := newAppPool(clock)
+	sut := newAppPool(mClock)
 	expectedInfo := make(AppPoolInfo)
 	for _, c := range clients {
 		sut.addClient(c)
 
-		lp := newLobbyPool(clock, c.lobby)
+		lp := newLobbyPool(mClock, c.lobby)
 		lp.addClient(c)
 		expectedInfo[c.app] = lp.getInfo()
 	}
