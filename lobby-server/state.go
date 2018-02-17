@@ -46,9 +46,9 @@ func (a ByClientID) Len() int           { return len(a) }
 func (a ByClientID) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByClientID) Less(i, j int) bool { return a[i].id < a[j].id }
 
-func newClientPool(lobby string) *ClientPool {
+func newClientPool(clock Clock, lobby string) *ClientPool {
 	cp := ClientPool{
-		clock:    RealClock,
+		clock:    clock,
 		clients:  make(ClientLookup),
 		lobby:    lobby,
 		joinable: true,
@@ -65,7 +65,8 @@ func (cp *ClientPool) renew() {
 	cp.lastUsed = cp.clock.NowTicks()
 }
 func (cp *ClientPool) expired() bool {
-	return cp.lastUsed < 5 // todo
+	now := cp.clock.NowTicks()
+	return cp.lastUsed < now-60
 }
 func (cp *ClientPool) addClient(client *Client) error {
 	if cp.lobby != client.lobby {
@@ -143,54 +144,66 @@ func (cp *ClientPool) getClientDetails() ClientDetails {
 	return result
 }
 
-type LobbyPool map[string]*ClientPool
+type LobbyPool struct {
+	clock   Clock
+	lobbies LobbyLookup
+}
+type LobbyLookup map[string]*ClientPool
 type LobbyPoolInfo map[string]ClientPoolInfo
 type LobbyPopulation []map[string]interface{}
 type LobbyPoolSummary []*ClientPoolSummary
 
-func (lp LobbyPool) length() int {
-	return len(lp)
+func newLobbyPool(clock Clock, app string) *LobbyPool {
+	lp := LobbyPool{
+		clock:   clock,
+		lobbies: make(LobbyLookup),
+	}
+	return &lp
 }
-func (lp LobbyPool) addClient(client *Client) error {
+
+func (lp *LobbyPool) length() int {
+	return len(lp.lobbies)
+}
+func (lp *LobbyPool) addClient(client *Client) error {
 	cp := lp.getLobby(client.lobby)
 	if cp == nil {
-		cp = newClientPool(client.lobby)
+		cp = newClientPool(lp.clock, client.lobby)
 	}
 	err := cp.addClient(client)
 	if err == nil {
-		lp[client.lobby] = cp
+		lp.lobbies[client.lobby] = cp
 	}
 	return err
 }
-func (lp LobbyPool) removeClient(client *Client) {
+func (lp *LobbyPool) removeClient(client *Client) {
 	clientPool := lp.getLobby(client.lobby)
 	if clientPool != nil {
 		clientPool.removeClient(client)
 		if clientPool.length() == 0 && clientPool.expired() {
-			delete(lp, client.lobby)
+			delete(lp.lobbies, client.lobby)
 		}
 	}
 }
-func (lp LobbyPool) hasClient(client *Client) bool {
-	cp := lp[client.lobby]
+func (lp *LobbyPool) hasClient(client *Client) bool {
+	cp := lp.lobbies[client.lobby]
 	return cp != nil && cp.hasClient(client)
 }
 
-func (lp LobbyPool) getLobby(lobby string) *ClientPool {
-	return lp[lobby]
+func (lp *LobbyPool) getLobby(lobby string) *ClientPool {
+	return lp.lobbies[lobby]
 }
 
-func (lp LobbyPool) getInfo() LobbyPoolInfo {
+func (lp *LobbyPool) getInfo() LobbyPoolInfo {
 	clients := make(LobbyPoolInfo)
-	for lobbyID := range lp {
+	for lobbyID := range lp.lobbies {
 		clients[lobbyID] = lp.getLobby(lobbyID).getInfo()
 	}
 	return clients
 }
 
-func (lp LobbyPool) getLobbyPopulation() LobbyPopulation {
+func (lp *LobbyPool) getLobbyPopulation() LobbyPopulation {
 	var sortedLobbyIDs []string
-	for lobbyID := range lp {
+	for lobbyID := range lp.lobbies {
 		sortedLobbyIDs = append(sortedLobbyIDs, lobbyID)
 	}
 	sort.Strings(sortedLobbyIDs)
@@ -207,9 +220,9 @@ func (lp LobbyPool) getLobbyPopulation() LobbyPopulation {
 	return result
 }
 
-func (lp LobbyPool) getSummary() LobbyPoolSummary {
+func (lp *LobbyPool) getSummary() LobbyPoolSummary {
 	var sortedLobbyIDs []string
-	for lobbyID := range lp {
+	for lobbyID := range lp.lobbies {
 		sortedLobbyIDs = append(sortedLobbyIDs, lobbyID)
 	}
 	sort.Strings(sortedLobbyIDs)
@@ -223,44 +236,56 @@ func (lp LobbyPool) getSummary() LobbyPoolSummary {
 	return result
 }
 
-type AppPool map[string]LobbyPool
+type AppPool struct {
+	clock Clock
+	apps  AppLookup
+}
+type AppLookup map[string]*LobbyPool
 type AppPoolInfo map[string]LobbyPoolInfo
 
-func (ap AppPool) length() int {
-	return len(ap)
+func newAppPool(clock Clock) *AppPool {
+	ap := AppPool{
+		clock: clock,
+		apps:  make(AppLookup),
+	}
+	return &ap
 }
-func (ap AppPool) addClient(client *Client) error {
+
+func (ap *AppPool) length() int {
+	return len(ap.apps)
+}
+func (ap *AppPool) addClient(client *Client) error {
 	lp := ap.getApp(client.app)
 	if lp == nil {
-		lp = make(LobbyPool)
+		lp = newLobbyPool(ap.clock, client.lobby)
 	}
 	err := lp.addClient(client)
 	if err == nil {
-		ap[client.app] = lp
+		ap.apps[client.app] = lp
 	}
 	return err
 }
-func (ap AppPool) removeClient(client *Client) {
+func (ap *AppPool) removeClient(client *Client) {
 	lobbyPool := ap.getApp(client.app)
 	if lobbyPool != nil {
 		lobbyPool.removeClient(client)
 		if lobbyPool.length() == 0 {
-			delete(ap, client.app)
+			delete(ap.apps, client.app)
 		}
 	}
 }
-func (ap AppPool) hasClient(client *Client) bool {
+func (ap *AppPool) hasClient(client *Client) bool {
 	lp := ap.getApp(client.app)
 	return lp != nil && lp.hasClient(client)
 }
 
-func (ap AppPool) getApp(app string) LobbyPool {
-	return ap[app]
+func (ap *AppPool) getApp(app string) *LobbyPool {
+	return ap.apps[app]
 }
 
-func (ap AppPool) getInfo() AppPoolInfo {
+func (ap *AppPool) getInfo() AppPoolInfo {
 	newMap := make(AppPoolInfo)
-	for appID := range ap {
+	for appID := range ap.apps {
 		newMap[appID] = ap.getApp(appID).getInfo()
 	}
 	return newMap

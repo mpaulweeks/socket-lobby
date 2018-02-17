@@ -10,7 +10,7 @@ import "fmt"
 // clients.
 type Hub struct {
 	// Registered clients.
-	clients AppPool
+	clients *AppPool
 
 	// Inbound messages from the clients.
 	broadcast chan *Message
@@ -27,7 +27,7 @@ func newHub() *Hub {
 		broadcast:  make(chan *Message),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
-		clients:    make(AppPool),
+		clients:    newAppPool(RealClock),
 	}
 }
 

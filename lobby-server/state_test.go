@@ -6,12 +6,13 @@ import (
 )
 
 func TestClientPool(t *testing.T) {
+	clock := RealClock
 	lobby := NewTestString("lobby")
-	emptyDetails := newClientPool(lobby).getClientDetails()
+	emptyDetails := newClientPool(clock, lobby).getClientDetails()
 	if !reflect.DeepEqual(emptyDetails, make(ClientDetails, 0)) {
 		t.Errorf("getClientDetails() should return empty list, got: %v", emptyDetails)
 	}
-	emptyInfo := newClientPool(lobby).getInfo()
+	emptyInfo := newClientPool(clock, lobby).getInfo()
 	if !reflect.DeepEqual(emptyInfo, make(ClientPoolInfo, 0)) {
 		t.Errorf("getInfo() should return empty list, got: %v", emptyInfo)
 	}
@@ -23,7 +24,7 @@ func TestClientPool(t *testing.T) {
 		newTestClientWithLobby(lobby),
 		newTestClientWithLobby(lobby),
 	}
-	sut := newClientPool(lobby)
+	sut := newClientPool(clock, lobby)
 	expectedInfo := make(ClientPoolInfo)
 	var expectedDetails ClientDetails
 	for _, c := range clients {
@@ -65,20 +66,31 @@ func TestClientPool(t *testing.T) {
 }
 
 func TestClientExpire(t *testing.T) {
-	mClock := newMockClockFromTicks(20)
+	mClock := newMockClockFromTicks(0)
 	testClient := newTestClient()
-	sut := newClientPool(testClient.lobby)
-	sut.clock = mClock
+	sut := newClientPool(mClock, testClient.lobby)
+	if sut.expired() {
+		t.Error("client should be fine right after creation")
+	}
+	mClock.nowTicks = 59
+	if sut.expired() {
+		t.Error("client should be fine before 60 seconds")
+	}
+	mClock.nowTicks += 60
+	if !sut.expired() {
+		t.Error("client should expire after 60 seconds")
+	}
 	sut.addClient(testClient)
-	// todo
 }
 
 func TestLobbyPool(t *testing.T) {
-	emptyPopulation := make(LobbyPool).getLobbyPopulation()
+	clock := RealClock
+	lobby := NewTestString("lobby")
+	emptyPopulation := newLobbyPool(clock, lobby).getLobbyPopulation()
 	if !reflect.DeepEqual(emptyPopulation, make(LobbyPopulation, 0)) {
 		t.Errorf("getLobbyPopulation() should return empty list, got: %v", emptyPopulation)
 	}
-	emptyInfo := make(LobbyPool).getInfo()
+	emptyInfo := newLobbyPool(clock, lobby).getInfo()
 	if !reflect.DeepEqual(emptyInfo, make(LobbyPoolInfo, 0)) {
 		t.Errorf("getInfo() should return empty list, got: %v", emptyInfo)
 	}
@@ -90,13 +102,13 @@ func TestLobbyPool(t *testing.T) {
 		newTestClient(),
 		newTestClient(),
 	}
-	sut := make(LobbyPool)
+	sut := newLobbyPool(clock, lobby)
 	expectedInfo := make(LobbyPoolInfo)
 	var expectedDetails LobbyPopulation
 	for _, c := range clients {
 		sut.addClient(c)
 
-		cp := newClientPool(c.lobby)
+		cp := newClientPool(clock, c.lobby)
 		cp.addClient(c)
 		expectedInfo[c.lobby] = cp.getInfo()
 
@@ -122,7 +134,8 @@ func TestLobbyPool(t *testing.T) {
 }
 
 func TestAppPool(t *testing.T) {
-	emptyInfo := make(AppPool).getInfo()
+	clock := RealClock
+	emptyInfo := newAppPool(clock).getInfo()
 	if !reflect.DeepEqual(emptyInfo, make(AppPoolInfo, 0)) {
 		t.Errorf("getInfo() should return empty list, got: %v", emptyInfo)
 	}
@@ -134,12 +147,12 @@ func TestAppPool(t *testing.T) {
 		newTestClient(),
 		newTestClient(),
 	}
-	sut := make(AppPool)
+	sut := newAppPool(clock)
 	expectedInfo := make(AppPoolInfo)
 	for _, c := range clients {
 		sut.addClient(c)
 
-		lp := make(LobbyPool)
+		lp := newLobbyPool(clock, c.lobby)
 		lp.addClient(c)
 		expectedInfo[c.app] = lp.getInfo()
 	}
@@ -217,17 +230,20 @@ func TestRemoveClientFromClientPool(t *testing.T) {
 	lobby := NewTestString("lobby")
 	tc1 := newTestClientWithLobby(lobby)
 	tc2 := newTestClientWithLobby(lobby)
-	helpTestClientCrud(t, tc1, tc2, newClientPool(lobby))
+	mClock := newMockClockFromTicks(0)
+	helpTestClientCrud(t, tc1, tc2, newClientPool(mClock, lobby))
 }
 
 func TestRemoveClientFromLobbyPool(t *testing.T) {
 	tc1 := newTestClient()
 	tc2 := newTestClient()
-	helpTestClientCrud(t, tc1, tc2, make(LobbyPool))
+	mClock := newMockClockFromTicks(0)
+	helpTestClientCrud(t, tc1, tc2, newLobbyPool(mClock, tc1.lobby))
 }
 
 func TestRemoveClientFromAppPool(t *testing.T) {
 	tc1 := newTestClient()
 	tc2 := newTestClient()
-	helpTestClientCrud(t, tc1, tc2, make(AppPool))
+	mClock := newMockClockFromTicks(0)
+	helpTestClientCrud(t, tc1, tc2, newAppPool(mClock))
 }

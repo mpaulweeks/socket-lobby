@@ -44,14 +44,6 @@ func newTestClientWithLobby(lobby string) *Client {
 	return &client
 }
 
-func newTestClientPool() ClientPool {
-	cp := ClientPool{}
-	for i := 0; i < 10; i++ {
-		cp.addClient(newTestClient())
-	}
-	return cp
-}
-
 type MockClock struct {
 	now      time.Time
 	nowTicks int
@@ -64,7 +56,7 @@ func (m *MockClock) NowTicks() int {
 	return m.nowTicks
 }
 
-func newMockClockFromTicks(nowTicks int) Clock {
+func newMockClockFromTicks(nowTicks int) *MockClock {
 	return &MockClock{
 		now:      time.Now(),
 		nowTicks: nowTicks,
