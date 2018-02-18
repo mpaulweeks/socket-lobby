@@ -44,6 +44,16 @@ func newTestClientWithLobby(lobby string) *Client {
 	return &client
 }
 
+func newTestClientWithApp(app string) *Client {
+	client := Client{
+		app:   app,
+		lobby: NewTestString("lobby"),
+		id:    NewTestString("client_id"),
+		data:  NewTestString("data"),
+	}
+	return &client
+}
+
 type MockClock struct {
 	now      time.Time
 	nowTicks int

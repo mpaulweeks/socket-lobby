@@ -7,6 +7,7 @@ import (
 
 var (
 	errClientPoolInvalidLobby = errors.New("client.lobby didn't match existing lobby")
+	errClientPoolInvalidApp   = errors.New("client.app didn't match existing app")
 	errClientPoolNotJoinable  = errors.New("lobby.joinable == false")
 	errClientPoolFull         = errors.New("already at capacity")
 )
@@ -145,6 +146,7 @@ func (cp *ClientPool) getClientDetails() ClientDetails {
 
 type LobbyPool struct {
 	clock   Clock
+	app     string
 	lobbies LobbyLookup
 }
 type LobbyLookup map[string]*ClientPool
@@ -155,6 +157,7 @@ type LobbyPoolSummary []*ClientPoolSummary
 func newLobbyPool(clock Clock, app string) *LobbyPool {
 	lp := LobbyPool{
 		clock:   clock,
+		app:     app,
 		lobbies: make(LobbyLookup),
 	}
 	return &lp
@@ -164,6 +167,9 @@ func (lp *LobbyPool) length() int {
 	return len(lp.lobbies)
 }
 func (lp *LobbyPool) addClient(client *Client) error {
+	if lp.app != client.app {
+		return errClientPoolInvalidApp
+	}
 	cp := lp.getLobby(client.lobby)
 	if cp == nil {
 		cp = newClientPool(lp.clock, client.lobby)
@@ -256,7 +262,7 @@ func (ap *AppPool) length() int {
 func (ap *AppPool) addClient(client *Client) error {
 	lp := ap.getApp(client.app)
 	if lp == nil {
-		lp = newLobbyPool(ap.clock, client.lobby)
+		lp = newLobbyPool(ap.clock, client.app)
 	}
 	err := lp.addClient(client)
 	if err == nil {

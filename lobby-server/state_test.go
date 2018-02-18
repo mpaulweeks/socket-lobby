@@ -85,24 +85,24 @@ func TestClientExpire(t *testing.T) {
 
 func TestLobbyPool(t *testing.T) {
 	mClock := RealClock
-	lobby := NewTestString("lobby")
-	emptyPopulation := newLobbyPool(mClock, lobby).getLobbyPopulation()
+	app := NewTestString("app")
+	emptyPopulation := newLobbyPool(mClock, app).getLobbyPopulation()
 	if !reflect.DeepEqual(emptyPopulation, make(LobbyPopulation, 0)) {
 		t.Errorf("getLobbyPopulation() should return empty list, got: %v", emptyPopulation)
 	}
-	emptyInfo := newLobbyPool(mClock, lobby).getInfo()
+	emptyInfo := newLobbyPool(mClock, app).getInfo()
 	if !reflect.DeepEqual(emptyInfo, make(LobbyPoolInfo, 0)) {
 		t.Errorf("getInfo() should return empty list, got: %v", emptyInfo)
 	}
 
-	testClient := newTestClient()
+	testClient := newTestClientWithApp(app)
 	clients := []*Client{
 		testClient,
-		newTestClient(),
-		newTestClient(),
-		newTestClient(),
+		newTestClientWithApp(app),
+		newTestClientWithApp(app),
+		newTestClientWithApp(app),
 	}
-	sut := newLobbyPool(mClock, lobby)
+	sut := newLobbyPool(mClock, app)
 	expectedInfo := make(LobbyPoolInfo)
 	var expectedDetails LobbyPopulation
 	for _, c := range clients {
@@ -152,12 +152,12 @@ func TestAppPool(t *testing.T) {
 	for _, c := range clients {
 		sut.addClient(c)
 
-		lp := newLobbyPool(mClock, c.lobby)
+		lp := newLobbyPool(mClock, c.app)
 		lp.addClient(c)
 		expectedInfo[c.app] = lp.getInfo()
 	}
 	if !sut.hasClient(testClient) {
-		t.Error("expected the same Client object")
+		t.Error("expected to have Client object")
 	}
 	if sut.hasClient(newTestClient()) {
 		t.Error("expected false on new Client")
@@ -238,10 +238,11 @@ func TestRemoveClientFromClientPool(t *testing.T) {
 }
 
 func TestRemoveClientFromLobbyPool(t *testing.T) {
-	tc1 := newTestClient()
-	tc2 := newTestClient()
+	app := NewTestString("app")
+	tc1 := newTestClientWithApp(app)
+	tc2 := newTestClientWithApp(app)
 	mClock := newMockClockFromTicks(0)
-	helpTestClientCrud(t, tc1, tc2, mClock, newLobbyPool(mClock, tc1.lobby))
+	helpTestClientCrud(t, tc1, tc2, mClock, newLobbyPool(mClock, tc1.app))
 }
 
 func TestRemoveClientFromAppPool(t *testing.T) {
