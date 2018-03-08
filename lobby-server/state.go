@@ -198,6 +198,14 @@ func (lp *LobbyPool) getLobby(lobby string) *ClientPool {
 	return lp.lobbies[lobby]
 }
 
+func (lp *LobbyPool) tryGetLobby(lobby string) *ClientPool {
+	clientPool := lp.getLobby(lobby)
+	if clientPool == nil {
+		clientPool = newClientPool(lp.clock, lobby)
+	}
+	return clientPool
+}
+
 func (lp *LobbyPool) getInfo() LobbyPoolInfo {
 	clients := make(LobbyPoolInfo)
 	for lobbyID := range lp.lobbies {
@@ -286,6 +294,14 @@ func (ap *AppPool) hasClient(client *Client) bool {
 
 func (ap *AppPool) getApp(app string) *LobbyPool {
 	return ap.apps[app]
+}
+
+func (ap *AppPool) tryGetApp(app string) *LobbyPool {
+	lobbyPool := ap.getApp(app)
+	if lobbyPool == nil {
+		lobbyPool = newLobbyPool(ap.clock, app)
+	}
+	return lobbyPool
 }
 
 func (ap *AppPool) getInfo() AppPoolInfo {
