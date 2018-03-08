@@ -3,8 +3,8 @@ class SocketLobby {
   constructor(app, baseUrl, logFunc){
      const defaultUrl = (
        document.location.host.indexOf('localhost') >= 0 ?
-       'localhost:5110' :
-       'socket-lobby.mpaulweeks.com'
+       'http://localhost:5110' :
+       'https://socket-lobby.mpaulweeks.com'
      );
     this.baseUrl = baseUrl || defaultUrl;
     this.app = app;
@@ -29,7 +29,7 @@ class SocketLobby {
 
   fetchApi(path) {
     return (
-      fetch(`http://${this.baseUrl}/api/v1/app/${this.app}/${path}`)
+      fetch(`${this.baseUrl}/api/v1/app/${this.app}/${path}`)
       .then(resp => {
          return resp.json();
       })
